@@ -3,8 +3,10 @@ pragma solidity 0.8.18;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {SPNFT} from "../src/SPNFT.sol";
+import {RevealedSPNFT} from "../src/RevealedSPNFT.sol";
 
-contract MyNFTTest is Test {
+contract SPNFTTest is Test {
+    RevealedSPNFT public rSPNFT;
     SPNFT public spNFT;
 
     address public constant ALICE = address(0x1);
@@ -13,7 +15,10 @@ contract MyNFTTest is Test {
     event Burned(address indexed holder, uint256 indexed tokenId);
 
     function setUp() public {
-        spNFT = new SPNFT("SP NFT", "SPNFT", bytes("https://white-chilly-koi-665.mypinata.cloud/ipfs/"));
+        rSPNFT =
+            new RevealedSPNFT("Revealed SP NFT", "RSPNFT", bytes("https://white-chilly-koi-665.mypinata.cloud/ipfs/"));
+        spNFT =
+            new SPNFT(address(rSPNFT), "SP NFT", "SPNFT", bytes("https://white-chilly-koi-665.mypinata.cloud/ipfs/"));
 
         assertEq(spNFT.name(), "SP NFT");
         assertEq(spNFT.symbol(), "SPNFT");
