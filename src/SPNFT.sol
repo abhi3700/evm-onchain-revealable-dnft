@@ -39,7 +39,7 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
     // tokenId => Metadata
     mapping(uint256 => Metadata) private _metadata;
 
-    // no. of tokens minted so far
+    // no. of tokens minted so far & also mint the next available token id
     // NOTE: burnt NFTs doesn't decrement this no.
     uint256 public tokenIds;
 
@@ -191,8 +191,7 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
         }
         // revealed type is 2
         else {
-            // TODO: Verify
-            // TODO: add onchain data
+            // get the tokenURI of exact same token id from the `RevealedSPNFT`
             return revealedSPNFT.tokenURI(id);
         }
     }
@@ -247,26 +246,24 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
     // ===================== Setters ===========================
 
     /// @dev Only Owner can
-    ///     - mint token
+    ///     - mint next available token id
     ///     - set name, description of the NFT
-    function mint(address to, uint256 id, bytes32 _name, bytes32 _description) external onlyOwner {
+    function mint(address to, bytes32 _name, bytes32 _description) external onlyOwner {
         if (_name.length == 0) {
             revert EmptyName();
         }
 
         // description is OPTIONAL
+        ++tokenIds;
 
-        Metadata storage mdata = _metadata[id];
+        Metadata storage mdata = _metadata[tokenIds];
 
-        // TODO: encode each or only image
         mdata.name = _name;
         mdata.description = _description;
 
-        ++tokenIds;
+        _mint(to, tokenIds);
 
-        _mint(to, id);
-
-        emit Minted(msg.sender, to, id);
+        emit Minted(msg.sender, to, tokenIds);
     }
 
     /// @dev NFT asset holder can burn any token
@@ -282,17 +279,17 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
     /// @dev reveal collection is possible only once, by current token owner .
     ///     There could be a case where the 1st owner didn't reveal and transferred as is
     ///     to the 2nd owner. Now, 2nd owner decides to reveal it with 1/2 type.
-    /// @param _revealType reveal type
+    /// @param _revealType reveal type to be set for unrevealed tokens.
     /// @param id token id
     function revealToken(uint8 _revealType, uint256 id) external nonReentrant {
         // token exists
         ownerOf(id);
 
-        // TODO: remove revealedTypes w metadata state var
+        // get the revealed type (to check already set or not)
         uint8 _revealedType = _metadata[id].revealType;
 
         // check if token already revealed
-        // when token owner reveals token for more than 1 time
+        // Need to check when token owner reveals token for more than 1 time
         if (_revealedType != 0) {
             revert AlreadyRevealed();
         }
@@ -332,48 +329,58 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
         return requestId;
     }
 
-    function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) internal override {
+    function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) internal override nonReentrant {
         RequestStatus memory requestStatus = sRequests[_requestId];
 
+        // check if requestId exists
         if (!requestStatus.exists) {
             revert RequestIdNotFound();
         }
 
+        // check if requestId is fulfilled
         if (requestStatus.fulfilled) {
             revert RequestIdAlreadyFulfilled();
         }
 
         sRequests[_requestId].fulfilled = true;
 
+        // get traits options
+        AttributeOptions memory traitsOptions = _attributeOptions;
+        bytes8 eye = traitsOptions.eyes[_randomWords[0] % 4];
+        bytes8 hair = traitsOptions.hair[_randomWords[1] % 4];
+        bytes8 face = traitsOptions.hair[_randomWords[1] % 4];
+        bytes8 mouth = traitsOptions.hair[_randomWords[1] % 4];
+
         // if reveal type = 1, 2
         if (requestStatus.revealType == 1 || requestStatus.revealType == 2) {
-            // get traits options
-            AttributeOptions memory traitsOptions = _attributeOptions;
-
             // get as storage to modify
             Metadata storage mdata = _metadata[requestStatus.tokenId];
 
             // set the attributes for the token id based on generated rand_num
-            mdata.attributeValues[0] = traitsOptions.eyes[_randomWords[0] % 4];
-            mdata.attributeValues[1] = traitsOptions.hair[_randomWords[1] % 4];
-            mdata.attributeValues[2] = traitsOptions.face[_randomWords[2] % 4];
-            mdata.attributeValues[3] = traitsOptions.mouth[_randomWords[3] % 4];
-
-            // TODO: Verify & also check for onchain storage in another contract
-            // if revealType == 2, then burn the token &
-            // mint into "RevealedSPNFT" contract
-            // with same owner
-            if (requestStatus.revealType == 2) {
-                // burn from current contract
-                this.burn(requestStatus.tokenId);
-
-                // mint to `msg.sender` (original owner) into `RevealedSPNFT` contract
-                revealedSPNFT.mint(ownerOf(requestStatus.tokenId), requestStatus.tokenId);
-
-                // TODO: transfer the metadata as well.
-            }
+            mdata.attributeValues[0] = eye;
+            mdata.attributeValues[1] = hair;
+            mdata.attributeValues[2] = face;
+            mdata.attributeValues[3] = mouth;
         }
-        // can't be 0, but incorporated for security reasons.
+        // if revealType == 2
+        else if (requestStatus.revealType == 2) {
+            // burn from current contract
+            this.burn(requestStatus.tokenId);
+
+            // get as memory to read.
+            // NOTE: No storage for attribute values. Only name, description, revealType remain stored in this contract
+            Metadata memory mdata = _metadata[requestStatus.tokenId];
+
+            // mint to `msg.sender` (original owner) into `RevealedSPNFT` contract with metadata values
+            revealedSPNFT.mint(
+                ownerOf(requestStatus.tokenId),
+                requestStatus.tokenId,
+                mdata.name,
+                mdata.description,
+                [eye, hair, face, mouth]
+            );
+        }
+        // can't be 0, but incorporated for security reasons [REDUNDANT]
         else {
             revert InvalidRevealType();
         }
