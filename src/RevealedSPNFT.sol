@@ -2,6 +2,8 @@
 pragma solidity 0.8.18;
 
 import {ERC721} from "solmate/tokens/ERC721.sol";
+import {ERC20} from "solmate/tokens/ERC20.sol";
+import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 import {LibString} from "solmate/utils/LibString.sol";
 import {LibBase64} from "./libs/LibBase64.sol";
 import {Owned} from "solmate/auth/Owned.sol";
@@ -9,10 +11,15 @@ import {console2} from "forge-std/Test.sol";
 
 /// @title Revealed SP NFT contract
 /// @notice For "Separate Collection Revealing" approach.
-contract RevealedSPNFT is ERC721, Owned {
+contract RevealedSPNFT is ERC721, Owned, ReentrancyGuard, ERC20 {
     using LibString for uint256;
 
     // ===================== STORAGE ===========================
+
+    struct Stake {
+        bool isStaked;
+        uint32 accInterestStartTime; // time from when the accrued interest calculation starts, reset the time (to now) when claimed
+    }
 
     // NFT metadata
     struct Metadata {
@@ -22,24 +29,39 @@ contract RevealedSPNFT is ERC721, Owned {
         bytes8[4] attributeValues;
     }
 
+    uint8 public constant APY = 5;
+    uint256 public constant PURCHASE_PRICE = 5e18; // 5 ETH or ERC20
+    uint256 public tokenIds;
+
+    // tokenId => Stake
+    mapping(uint256 => Stake) stakedTokenIds;
+
     // tokenId => Metadata
     mapping(uint256 => Metadata) private _metadata;
 
     // no. of tokens minted so far
     // NOTE: burnt NFTs doesn't decrement this no.
-    uint256 public tokenIds;
 
     // ===================== EVENT ===========================
     event Minted(address indexed caller, address indexed to, uint256 indexed tokenId);
     event Burned(address indexed holder, uint256 indexed tokenId);
+    event Staked(address indexed user, uint256 indexed tokenId);
+    event RewardsClaimedFor(address indexed user, uint256 indexed tokenId);
 
     // ===================== ERROR ===========================
     error EmptyName();
     error NotOwner(address);
     error EmptyAttributeValues();
+    error InsufficientETHForMinting();
+    error ETHRefundFailed();
+
+    error NotStaked();
+    error EmptyDescription();
+    error AlreadyStaked();
 
     // ===================== CONSTRUCTOR ===========================
-    constructor(string memory _n, string memory _s) ERC721(_n, _s) Owned(msg.sender) {}
+
+    constructor(string memory _n, string memory _s) ERC721(_n, _s) Owned(msg.sender) ERC20("SP Token", "SP", 18) {}
 
     // ===================== Getters ===========================
     function tokenURI(uint256 id) public view virtual override returns (string memory) {
@@ -122,10 +144,20 @@ contract RevealedSPNFT is ERC721, Owned {
     ///     - set name, description, attributes of the NFT
     function mint(address to, uint256 id, bytes32 _name, bytes32 _description, bytes8[4] memory attributeValues)
         external
+        payable
         onlyOwner
+        nonReentrant
     {
         if (_name.length == 0) {
             revert EmptyName();
+        }
+
+        if (_description.length == 0) {
+            revert EmptyDescription();
+        }
+
+        if (msg.value < PURCHASE_PRICE) {
+            revert InsufficientETHForMinting();
         }
 
         // check for non-empty elements inside attribute values
@@ -143,7 +175,16 @@ contract RevealedSPNFT is ERC721, Owned {
         // total minted tokens updated for record.
         ++tokenIds;
 
+        uint256 refundableETH = msg.value - PURCHASE_PRICE;
+
         _mint(to, id);
+
+        if (refundableETH > 0) {
+            (bool success,) = payable(msg.sender).call{gas: 2300, value: refundableETH}("");
+            if (!success) {
+                revert ETHRefundFailed();
+            }
+        }
 
         emit Minted(msg.sender, to, tokenIds);
     }
@@ -156,6 +197,54 @@ contract RevealedSPNFT is ERC721, Owned {
 
         emit Burned(msg.sender, id);
     }
+
+    /// @dev stake function
+    function stake(uint256 _tokenId) external nonReentrant {
+        // check for valid token id: owned or not by caller
+        ownerOf(_tokenId);
+
+        // By default the type is 2 as minted by SPNFT after contract deployment settings for the project.
+        // So, no need to check for the reveal type.
+        // as the type 2 is burned here & moved to other contract
+
+        Stake storage stake = stakedTokenIds[_tokenId];
+
+        // check if token id already staked or not
+        if (stake.isStaked) {
+            revert AlreadyStaked();
+        }
+
+        stake.isStaked = true;
+        stake.accInterestStartTime = uint32(block.timestamp);
+
+        emit Staked(msg.sender, _tokenId);
+    }
+
+    /// @dev claim rewards for staked token Id
+    /// @param _tokenId token Id for which accrued interest rewards are to be claimed
+    function claimRewardsFor(uint256 _tokenId) external nonReentrant {
+        // check for valid token id: owned or not by caller
+        ownerOf(_tokenId);
+
+        Stake storage stake = stakedTokenIds[_tokenId];
+
+        // check if token id staked or not
+        if (!stake.isStaked) {
+            revert NotStaked();
+        }
+
+        uint256 accruedInterest = (PURCHASE_PRICE * APY) / 100;
+
+        // reset the staked time to now so as to calculate the accrued interest from now.
+        stake.accInterestStartTime = uint32(block.timestamp);
+
+        // mint the accrued interest
+        ERC20._mint(msg.sender, accruedInterest);
+
+        emit RewardsClaimedFor(msg.sender, _tokenId);
+    }
+
+    // TODO: override all external setters: approve, transfer, transferFrom functions ensuring the tokens are not transferable or approvable
 
     // ===================== UTILITY ===========================
 

@@ -41,6 +41,7 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
     }
 
     uint8 public constant APY = 5;
+    uint256 public constant PURCHASE_PRICE = 5e18; // 5 ETH or ERC20
 
     AttributeOptions private _attributeOptions;
 
@@ -101,7 +102,7 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
     event RequestSent(uint256 requestId, uint32 numWords);
     event RequestFulfilled(uint256 requestId, uint256[] randomWords);
     event Staked(address indexed user, uint256 indexed tokenId);
-    event Claimed(address indexed user, uint256 indexed tokenId);
+    event RewardsClaimedFor(address indexed user, uint256 indexed tokenId);
 
     // ===================== ERROR ===========================
     error EmptyName();
@@ -116,6 +117,9 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
     error AlreadyStaked();
     error NotStaked();
     error InvalidTokenIdForStake(uint256);
+    error InsufficientETHForMinting();
+    error ETHRefundFailed();
+    error EmptyDescription();
 
     // ===================== CONSTRUCTOR ===========================
     constructor(
@@ -181,7 +185,8 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
         }
         // revealed type is 1
         else if (_revealedType == 1) {
-            // TODO: return the decoded onchain metadata
+            // return the encoded onchain metadata for transfer data (in encoded format like serialization)
+            // in terms of fast data transmission. Then, at the client level, it would be deserialized/decoded.
             string memory json = LibBase64.encode(
                 bytes(
                     string(
@@ -277,6 +282,14 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
             revert EmptyName();
         }
 
+        if (_description.length == 0) {
+            revert EmptyDescription();
+        }
+
+        if (msg.value < PURCHASE_PRICE) {
+            revert InsufficientETHForMinting();
+        }
+
         // description is OPTIONAL
         ++tokenIds;
 
@@ -285,7 +298,16 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
         mdata.name = _name;
         mdata.description = _description;
 
+        uint256 refundableETH = msg.value - PURCHASE_PRICE;
+
         _mint(to, tokenIds);
+
+        if (refundableETH > 0) {
+            (bool success,) = payable(msg.sender).call{gas: 2300, value: refundableETH}("");
+            if (!success) {
+                revert ETHRefundFailed();
+            }
+        }
 
         emit Minted(msg.sender, to, tokenIds);
     }
@@ -433,7 +455,7 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
         }
 
         stake.isStaked = true;
-        stake.accInterestStartTime = block.timestamp;
+        stake.accInterestStartTime = uint32(block.timestamp);
 
         emit Staked(msg.sender, _tokenId);
     }
@@ -451,11 +473,13 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
             revert NotStaked();
         }
 
-        uint256 x = 10000000e18;
-        uint256 accruedInterest = (x * APY) / 100;
+        uint256 accruedInterest = (PURCHASE_PRICE * APY) / 100;
+
+        // reset the staked time to now so as to calculate the accrued interest from now.
+        stake.accInterestStartTime = uint32(block.timestamp);
 
         // mint the accrued interest
-        ERC20._mint(to, accruedInterest);
+        ERC20._mint(msg.sender, accruedInterest);
 
         emit RewardsClaimedFor(msg.sender, _tokenId);
     }
