@@ -1,0 +1,24 @@
+{
+  "name": "SP002",
+  "description": "Story Protocol Person Face NFT",
+  // need to be generated from traits for onchain storage
+  //   "image": "https://white-chilly-koi-665.mypinata.cloud/ipfs/QmYYnCMFek7iRNStLSjjY1wNzFgZzzWn9kwyKiJUyjPEGz/MysteryBox.png",
+  "attributes": [
+    {
+      "trait_type": "Eyes",
+      "value": "Orange"
+    },
+    {
+      "trait_type": "Hair",
+      "value": "Orange"
+    },
+    {
+      "trait_type": "Face",
+      "value": "Big"
+    },
+    {
+      "trait_type": "Mouth",
+      "value": "Deep Orange"
+    }
+  ]
+}

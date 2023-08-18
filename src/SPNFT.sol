@@ -5,6 +5,7 @@ import {ERC721} from "solmate/tokens/ERC721.sol";
 import {Owned} from "solmate/auth/Owned.sol";
 import {LibString} from "solmate/utils/LibString.sol";
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
+import {LibBase64} from "./libs/LibBase64.sol";
 
 import {IRevealedSPNFT} from "./interfaces/IRevealedSPNFT.sol";
 import {console2} from "forge-std/Test.sol";
@@ -16,9 +17,19 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
     struct Metadata {
         string name;
         string description;
-        string image;
+        // string image;    // it is to be generated during revealing randomizing traits' values options (colors).
         string[4] attributeValues;
     }
+
+    // attribute options
+    struct AttributeOptions {
+        string[4] eyes;
+        string[4] hair;
+        string[4] face;
+        string[4] mouth;
+    }
+
+    AttributeOptions private attributeOptions;
 
     mapping(uint256 => Metadata) private metadata;
 
@@ -30,35 +41,20 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
 
     IRevealedSPNFT public revealedSPNFT;
 
-    // required for setting during deployment
-    string private revealedBaseUri1;
-    // metadata i.e. token uri (containing image url) for unrevealed asset (shown by default).
-    string public constant UNREVEALED_URI =
-        "https://white-chilly-koi-665.mypinata.cloud/ipfs/QmVzu86nv6wUbUgFxBdeQt9954yf4Ty8eFdYPfA5Cu1M8o/mystery_box.json";
-
     event Minted(address indexed caller, address indexed to, uint256 indexed tokenId);
     event Burned(address indexed holder, uint256 indexed tokenId);
 
-    error EmptyBaseURI();
     error EmptyName();
-    error EmptyImage();
     error AttributeValuesMustBeFourAndNonEmpty();
     error NotOwner(address);
-    error InvalidToken(uint256); // Invalid Token ID
     error AlreadyRevealed();
     error InvalidRevealType();
     error InvalidRSPNFTAddress(address);
 
-    /// @param _uri common base URI for the entire collection set during deployment
-    constructor(address rSPNFTAddress, string memory _n, string memory _s, bytes memory _uri)
+    constructor(address rSPNFTAddress, string memory _n, string memory _s, AttributeOptions memory _aOptions)
         ERC721(_n, _s)
         Owned(msg.sender)
     {
-        // check for empty base Uri
-        if (keccak256(_uri) == keccak256(bytes(""))) {
-            revert EmptyBaseURI();
-        }
-
         // check if contract
         uint256 size;
         assembly {
@@ -68,7 +64,10 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
             revert InvalidRSPNFTAddress(rSPNFTAddress);
         }
 
-        revealedBaseUri1 = string(_uri);
+        // TODO: check for attribute options validity
+
+        attributeOptions = _aOptions;
+
         revealedSPNFT = IRevealedSPNFT(rSPNFTAddress);
     }
 
@@ -82,14 +81,29 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
         // revealed type is 0 i.e. not revealed yet
         if (_revealedType == 0) {
             // give the unrevealed uri
-            return UNREVEALED_URI;
+            // TODO:
+            string memory json = LibBase64.encode(
+                bytes(
+                    string(
+                        abi.encodePacked(
+                            '{"name": "SP001",',
+                            '"description":"Story Protocol Mystery Box NFT","image": "',
+                            getSvg(id),
+                            '",',
+                            '"attributes": [{"trait_type": "Shape","value": "Cube"},{"trait_type": "Borders","value": "Black"},{"trait_type": "Filled","value": "Orange"}]',
+                            "}"
+                        )
+                    )
+                )
+            );
+            return string(abi.encodePacked("data:application/json;base64,", json));
         }
         // revealed type is 1
         else if (_revealedType == 1) {
             Metadata memory mdata = metadata[id];
 
             // TODO: return the decoded onchain metadata
-            string memory json = Base64.encode(
+            string memory json = LibBase64.encode(
                 bytes(
                     string(
                         abi.encodePacked(
@@ -99,7 +113,7 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
                             '"description":"',
                             mdata.description,
                             '"image": "',
-                            getSvg(tokenId),
+                            getSvg(id),
                             '",',
                             '"attributes": [{"trait_type": "Eyes", "value": ',
                             mdata.attributeValues[0],
@@ -132,21 +146,17 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
         uint256 id,
         string memory _name,
         string memory _description,
-        string memory _image,
         string[4] memory _attributeValues
     ) external onlyOwner {
-        if (_name == "") {
+        if (isStringEmpty(_name)) {
             revert EmptyName();
         }
 
         // description is OPTIONAL
 
-        if (_image == "") {
-            revert EmptyImage();
-        }
         if (
-            _attributeValues.length != 4 || _attributeValues[0] != "" || _attributeValues[1] != ""
-                || _attributeValues[2] != "" || _attributeValues[3] != ""
+            _attributeValues.length != 4 || !isStringEmpty(_attributeValues[0]) || !isStringEmpty(_attributeValues[1])
+                || !isStringEmpty(_attributeValues[2]) || !isStringEmpty(_attributeValues[3])
         ) {
             revert AttributeValuesMustBeFourAndNonEmpty();
         }
@@ -156,7 +166,6 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
         // TODO: encode each or only image
         mdata.name = _name;
         mdata.description = _description;
-        mdata.image = _image;
         mdata.attributeValues = _attributeValues;
 
         ++tokenIds;
@@ -195,6 +204,8 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
         if (revealType == 1 || revealType == 2) {
             revealedTypes[id] = revealType;
 
+            // TODO: randomize traits values using chainlink & set the attributes for the token id
+
             // TODO: Verify & also check for onchain storage in another contract
             // if revealType == 2, then burn the token &
             // mint into "RevealedSPNFT" contract
@@ -205,16 +216,82 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
 
                 // mint to `msg.sender` (original owner) into `RevealedSPNFT` contract
                 revealedSPNFT.mint(owner, id);
+
+                // TODO: transfer the metadata as well.
             }
         } else {
             revert InvalidRevealType();
         }
     }
 
-    function _getSvg(uint256 tokenId) private view returns (string memory svg) {
-        // TODO: it should be decoded
-        // svg = decode(metadata[id].image)
-        svg =
-            "<svg width='350px' height='350px' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'> <path d='M11.55 18.46C11.3516 18.4577 11.1617 18.3789 11.02 18.24L5.32001 12.53C5.19492 12.3935 5.12553 12.2151 5.12553 12.03C5.12553 11.8449 5.19492 11.6665 5.32001 11.53L13.71 3C13.8505 2.85931 14.0412 2.78017 14.24 2.78H19.99C20.1863 2.78 20.3745 2.85796 20.5133 2.99674C20.652 3.13552 20.73 3.32374 20.73 3.52L20.8 9.2C20.8003 9.40188 20.7213 9.5958 20.58 9.74L12.07 18.25C11.9282 18.3812 11.7432 18.4559 11.55 18.46ZM6.90001 12L11.55 16.64L19.3 8.89L19.25 4.27H14.56L6.90001 12Z' fill='red'/> <path d='M14.35 21.25C14.2512 21.2522 14.153 21.2338 14.0618 21.1959C13.9705 21.158 13.8882 21.1015 13.82 21.03L2.52 9.73999C2.38752 9.59782 2.3154 9.40977 2.31883 9.21547C2.32226 9.02117 2.40097 8.83578 2.53838 8.69837C2.67579 8.56096 2.86118 8.48224 3.05548 8.47882C3.24978 8.47539 3.43783 8.54751 3.58 8.67999L14.88 20C15.0205 20.1406 15.0993 20.3312 15.0993 20.53C15.0993 20.7287 15.0205 20.9194 14.88 21.06C14.7353 21.1907 14.5448 21.259 14.35 21.25Z' fill='red'/> <path d='M6.5 21.19C6.31632 21.1867 6.13951 21.1195 6 21L2.55 17.55C2.47884 17.4774 2.42276 17.3914 2.385 17.297C2.34724 17.2026 2.32855 17.1017 2.33 17C2.33 16.59 2.33 16.58 6.45 12.58C6.59063 12.4395 6.78125 12.3607 6.98 12.3607C7.17876 12.3607 7.36938 12.4395 7.51 12.58C7.65046 12.7206 7.72934 12.9112 7.72934 13.11C7.72934 13.3087 7.65046 13.4994 7.51 13.64C6.22001 14.91 4.82 16.29 4.12 17L6.5 19.38L9.86 16C9.92895 15.9292 10.0114 15.873 10.1024 15.8346C10.1934 15.7962 10.2912 15.7764 10.39 15.7764C10.4888 15.7764 10.5866 15.7962 10.6776 15.8346C10.7686 15.873 10.8511 15.9292 10.92 16C11.0605 16.1406 11.1393 16.3312 11.1393 16.53C11.1393 16.7287 11.0605 16.9194 10.92 17.06L7 21C6.8614 21.121 6.68402 21.1884 6.5 21.19Z' fill='red'/> </svg>";
+    function getSvg(uint256 tokenId) private view returns (string memory svg) {
+        uint8 _revealedType = revealedTypes[tokenId];
+
+        // revealed type is 0 i.e. not revealed yet
+        if (_revealedType == 0) {
+            // give the unrevealed uri
+            svg = string(
+                abi.encodePacked(
+                    '<svg width="800px" height="800px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#F48024" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="miter"><polygon points="3 16 3 8 12 14 21 8 21 16 12 22 3 16" stroke-width="0" opacity="0.1" fill="#059cf7"></polygon><polygon points="21 8 21 16 12 22 3 16 3 8 12 2 21 8"></polygon><polyline points="3 8 12 14 12 22" stroke-linecap="round"></polyline><line x1="21" y1="8" x2="12" y2="14" stroke-linecap="round"></line></svg>'
+                )
+            );
+        }
+        // in case of type = 1, 2
+        else {
+            Metadata memory mdata = metadata[tokenId];
+
+            // TODO: it should be decoded
+            svg = string(
+                abi.encodePacked(
+                    '<svg viewBox="0 0 58 58" style="enable-background:new 0 0 58 58;" xml:space="preserve"><g><path style="fill:',
+                    mdata.attributeValues[2],
+                    ';" d="M29.392,54.999c11.246,0.156,17.52-4.381,21.008-9.189c3.603-4.966,4.764-11.283,3.647-17.323 C50.004,6.642,29.392,6.827,29.392,6.827S8.781,6.642,4.738,28.488c-1.118,6.04,0.044,12.356,3.647,17.323 C11.872,50.618,18.146,55.155,29.392,54.999z"/><path style="fill:#F9A671;" d="M4.499,30.125c-0.453-0.429-0.985-0.687-1.559-0.687C1.316,29.438,0,31.419,0,33.862 c0,2.443,1.316,4.424,2.939,4.424c0.687,0,1.311-0.37,1.811-0.964C4.297,34.97,4.218,32.538,4.499,30.125z"/><path style="fill:#F9A671;" d="M57.823,26.298c-0.563-2.377-2.3-3.999-3.879-3.622c-0.491,0.117-0.898,0.43-1.225,0.855 c0.538,1.515,0.994,3.154,1.328,4.957c0.155,0.837,0.261,1.679,0.328,2.522c0.52,0.284,1.072,0.402,1.608,0.274 C57.562,30.908,58.386,28.675,57.823,26.298z"/><path style="fill:',
+                    mdata.attributeValues[1],
+                    ';" d="M13.9,16.998c-0.256,0-0.512-0.098-0.707-0.293l-5-5c-0.391-0.391-0.391-1.023,0-1.414 s1.023-0.391,1.414,0l5,5c0.391,0.391,0.391,1.023,0,1.414C14.412,16.901,14.156,16.998,13.9,16.998z"/><path style="fill:',
+                    mdata.attributeValues[1],
+                    ';" d="M16.901,13.998c-0.367,0-0.72-0.202-0.896-0.553l-3-6c-0.247-0.494-0.047-1.095,0.447-1.342 c0.495-0.245,1.094-0.047,1.342,0.447l3,6c0.247,0.494,0.047,1.095-0.447,1.342C17.204,13.964,17.052,13.998,16.901,13.998z"/><path style="fill:',
+                    mdata.attributeValues[1],
+                    ';" d="M20.9,11.998c-0.419,0-0.809-0.265-0.948-0.684l-2-6c-0.175-0.524,0.108-1.091,0.632-1.265 c0.527-0.176,1.091,0.108,1.265,0.632l2,6c0.175,0.524-0.108,1.091-0.632,1.265C21.111,11.982,21.005,11.998,20.9,11.998z"/><path style="fill:',
+                    mdata.attributeValues[1],
+                    ';" d="M25.899,10.998c-0.48,0-0.904-0.347-0.985-0.836l-1-6c-0.091-0.544,0.277-1.06,0.822-1.15 c0.543-0.098,1.061,0.277,1.15,0.822l1,6c0.091,0.544-0.277,1.06-0.822,1.15C26.009,10.995,25.954,10.998,25.899,10.998z"/><path style="fill:',
+                    mdata.attributeValues[1],
+                    ';" d="M29.9,10.998c-0.553,0-1-0.447-1-1v-6c0-0.553,0.447-1,1-1s1,0.447,1,1v6 C30.9,10.551,30.453,10.998,29.9,10.998z"/><path style="fill:',
+                    mdata.attributeValues[1],
+                    ';" d="M33.9,10.998c-0.104,0-0.211-0.017-0.316-0.052c-0.523-0.174-0.807-0.74-0.632-1.265l2-6 c0.175-0.523,0.736-0.809,1.265-0.632c0.523,0.174,0.807,0.74,0.632,1.265l-2,6C34.709,10.734,34.319,10.998,33.9,10.998z"/><path style="fill:',
+                    mdata.attributeValues[1],
+                    ';" d="M37.9,11.998c-0.104,0-0.211-0.017-0.316-0.052c-0.523-0.174-0.807-0.74-0.632-1.265l2-6c0.175-0.523,0.737-0.808,1.265-0.632c0.523,0.174,0.807,0.74,0.632,1.265l-2,6C38.709,11.734,38.319,11.998,37.9,11.998z"/><path style="fill:',
+                    mdata.attributeValues[1],
+                    ';" d="M40.899,13.998c-0.15,0-0.303-0.034-0.446-0.105c-0.494-0.247-0.694-0.848-0.447-1.342l3-6c0.248-0.494,0.848-0.692,1.342-0.447c0.494,0.247,0.694,0.848,0.447,1.342l-3,6C41.619,13.796,41.267,13.998,40.899,13.998z"/><circle style="fill:#FFFFFF;" cx="22" cy="26.003" r="6"/><circle style="fill:#FFFFFF;" cx="36" cy="26.003" r="8"/><circle style="fill:',
+                    mdata.attributeValues[0],
+                    ';" cx="22" cy="26.003" r="2"/><circle style="fill:',
+                    mdata.attributeValues[0],
+                    ';" cx="36" cy="26.003" r="3"/><path style="fill:',
+                    mdata.attributeValues[3],
+                    ';" d="M28.229,50.009c-3.336,0-6.646-0.804-9.691-2.392c-0.49-0.255-0.68-0.859-0.425-1.349 c0.255-0.49,0.856-0.682,1.349-0.425c4.505,2.348,9.648,2.802,14.487,1.28c4.839-1.522,8.796-4.842,11.144-9.346 c0.255-0.491,0.857-0.684,1.349-0.425c0.49,0.255,0.68,0.859,0.425,1.349c-2.595,4.979-6.969,8.646-12.316,10.329 C32.474,49.685,30.346,50.009,28.229,50.009z"/><path style="fill:',
+                    mdata.attributeValues[3],
+                    ';" d="M18,50.003c-0.553,0-1-0.447-1-1c0-2.757,2.243-5,5-5c0.553,0,1,0.447,1,1s-0.447,1-1,1 c-1.654,0-3,1.346-3,3C19,49.556,18.553,50.003,18,50.003z"/><path style="fill:',
+                    mdata.attributeValues[3],
+                    ';" d="M48,42.003c-0.553,0-1-0.447-1-1c0-1.654-1.346-3-3-3c-0.553,0-1-0.447-1-1s0.447-1,1-1 c2.757,0,5,2.243,5,5C49,41.556,48.553,42.003,48,42.003z"/></g></svg>'
+                )
+            );
+        }
+    }
+
+    // compare string
+    function compareString(string memory s1, string memory s2) private pure returns (bool isEqual) {
+        if (keccak256(bytes(s1)) == keccak256(bytes(s2))) {
+            isEqual = true;
+        } else {
+            isEqual = false;
+        }
+    }
+
+    // empty string
+    function isStringEmpty(string memory s1) private pure returns (bool isEmpty) {
+        if (keccak256(bytes(s1)) == keccak256(bytes(""))) {
+            isEmpty = true;
+        } else {
+            isEmpty = false;
+        }
     }
 }

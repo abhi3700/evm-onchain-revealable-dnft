@@ -1,0 +1,20 @@
+{
+  "name": "SP001",
+  "description": "Story Protocol Mystery Box NFT",
+  // need to be generated from traits for onchain storage
+  // "image": "https://white-chilly-koi-665.mypinata.cloud/ipfs/QmYYnCMFek7iRNStLSjjY1wNzFgZzzWn9kwyKiJUyjPEGz/MysteryBox.png",
+  "attributes": [
+    {
+      "trait_type": "Shape",
+      "value": "Cube"
+    },
+    {
+      "trait_type": "Borders",
+      "value": "Black"
+    },
+    {
+      "trait_type": "Filled",
+      "value": "Orange"
+    }
+  ]
+}
