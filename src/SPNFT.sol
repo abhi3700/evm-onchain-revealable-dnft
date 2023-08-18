@@ -5,9 +5,9 @@ import {ERC721} from "solmate/tokens/ERC721.sol";
 import {LibString} from "solmate/utils/LibString.sol";
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 import {LibBase64} from "./libs/LibBase64.sol";
-import {VRFCoordinatorV2Interface} from "chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
-import {VRFConsumerBaseV2} from "chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
-import {ConfirmedOwner} from "chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
+import {VRFCoordinatorV2Interface} from "./dependencies/VRFCoordinatorV2Interface.sol";
+import {VRFConsumerBaseV2} from "./dependencies/VRFConsumerBaseV2.sol";
+import {ConfirmedOwner} from "./dependencies/ConfirmedOwner.sol";
 
 import {IRevealedSPNFT} from "./interfaces/IRevealedSPNFT.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
