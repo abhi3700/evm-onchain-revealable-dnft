@@ -13,25 +13,26 @@ import {console2} from "forge-std/Test.sol";
 contract SPNFT is ERC721, Owned, ReentrancyGuard {
     using LibString for uint256;
 
+    // ===================== STORAGE ===========================
     // metadata
     struct Metadata {
-        string name;
-        string description;
+        bytes32 name;
+        bytes32 description;
         // string image;    // it is to be generated during revealing randomizing traits' values options (colors).
-        string[4] attributeValues;
+        bytes8[4] attributeValues;
     }
 
     // attribute options
     struct AttributeOptions {
-        string[4] eyes;
-        string[4] hair;
-        string[4] face;
-        string[4] mouth;
+        bytes8[4] eyes;
+        bytes8[4] hair;
+        bytes8[4] face;
+        bytes8[4] mouth;
     }
 
-    AttributeOptions private attributeOptions;
+    AttributeOptions private _attributeOptions;
 
-    mapping(uint256 => Metadata) private metadata;
+    mapping(uint256 => Metadata) private _metadata;
 
     // no. of tokens minted so far
     // NOTE: burnt NFTs doesn't decrement this no.
@@ -41,16 +42,19 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
 
     IRevealedSPNFT public revealedSPNFT;
 
+    // ===================== EVENT ===========================
     event Minted(address indexed caller, address indexed to, uint256 indexed tokenId);
     event Burned(address indexed holder, uint256 indexed tokenId);
 
+    // ===================== ERROR ===========================
     error EmptyName();
-    error AttributeValuesMustBeFourAndNonEmpty();
+    error AttributeOptionsMustBeFourAndNonEmptyElements();
     error NotOwner(address);
     error AlreadyRevealed();
     error InvalidRevealType();
     error InvalidRSPNFTAddress(address);
 
+    // ===================== CONSTRUCTOR ===========================
     constructor(address rSPNFTAddress, string memory _n, string memory _s, AttributeOptions memory _aOptions)
         ERC721(_n, _s)
         Owned(msg.sender)
@@ -64,14 +68,27 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
             revert InvalidRSPNFTAddress(rSPNFTAddress);
         }
 
-        // TODO: check for attribute options validity
+        // sanitize attribute options
+        // length of each attribute options - eyes, hair, nose, mouth would be 4 for sure as declared above.
+        if (
+            !(
+                !_isBytes8ArrayElementEmpty(_aOptions.eyes) && !_isBytes8ArrayElementEmpty(_aOptions.hair)
+                    && !_isBytes8ArrayElementEmpty(_aOptions.face) && !_isBytes8ArrayElementEmpty(_aOptions.mouth)
+            )
+        ) {
+            revert AttributeOptionsMustBeFourAndNonEmptyElements();
+        }
 
-        attributeOptions = _aOptions;
+        _attributeOptions = _aOptions;
 
         revealedSPNFT = IRevealedSPNFT(rSPNFTAddress);
     }
 
+    // ===================== Getters ===========================
+
     /// @dev tokenURI returns the metadata
+    // function tokenURI(uint256 id) public view virtual override returns (string memory) {}
+
     function tokenURI(uint256 id) public view virtual override returns (string memory) {
         // token exists
         ownerOf(id);
@@ -80,27 +97,12 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
 
         // revealed type is 0 i.e. not revealed yet
         if (_revealedType == 0) {
-            // give the unrevealed uri
-            // TODO:
-            string memory json = LibBase64.encode(
-                bytes(
-                    string(
-                        abi.encodePacked(
-                            '{"name": "SP001",',
-                            '"description":"Story Protocol Mystery Box NFT","image": "',
-                            getSvg(id),
-                            '",',
-                            '"attributes": [{"trait_type": "Shape","value": "Cube"},{"trait_type": "Borders","value": "Black"},{"trait_type": "Filled","value": "Orange"}]',
-                            "}"
-                        )
-                    )
-                )
-            );
-            return string(abi.encodePacked("data:application/json;base64,", json));
+            // return _getUnrevealedMetadataWoEncoding(id);
+            return _getUnrevealedMetadataWEncoding(id);
         }
         // revealed type is 1
         else if (_revealedType == 1) {
-            Metadata memory mdata = metadata[id];
+            Metadata memory mdata = _metadata[id];
 
             // TODO: return the decoded onchain metadata
             string memory json = LibBase64.encode(
@@ -113,7 +115,7 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
                             '"description":"',
                             mdata.description,
                             '"image": "',
-                            getSvg(id),
+                            _getSvg(id),
                             '",',
                             '"attributes": [{"trait_type": "Eyes", "value": ',
                             mdata.attributeValues[0],
@@ -137,36 +139,26 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
         // revealed type is 2
         else {
             // TODO: Verify
+            // TODO: add onchain data
             return revealedSPNFT.tokenURI(id);
         }
     }
 
-    function mint(
-        address to,
-        uint256 id,
-        string memory _name,
-        string memory _description,
-        string[4] memory _attributeValues
-    ) external onlyOwner {
-        if (isStringEmpty(_name)) {
+    /// @dev Only Owner can
+    ///     - mint token
+    ///     - set name, description of the NFT
+    function mint(address to, uint256 id, bytes32 _name, bytes32 _description) external onlyOwner {
+        if (_name.length == 0) {
             revert EmptyName();
         }
 
         // description is OPTIONAL
 
-        if (
-            _attributeValues.length != 4 || !isStringEmpty(_attributeValues[0]) || !isStringEmpty(_attributeValues[1])
-                || !isStringEmpty(_attributeValues[2]) || !isStringEmpty(_attributeValues[3])
-        ) {
-            revert AttributeValuesMustBeFourAndNonEmpty();
-        }
-
-        Metadata storage mdata = metadata[id];
+        Metadata storage mdata = _metadata[id];
 
         // TODO: encode each or only image
         mdata.name = _name;
         mdata.description = _description;
-        mdata.attributeValues = _attributeValues;
 
         ++tokenIds;
 
@@ -175,6 +167,7 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
         emit Minted(msg.sender, to, id);
     }
 
+    /// @dev NFT asset holder can burn any token
     function burn(uint256 id) external {
         if (msg.sender != ownerOf(id)) {
             revert NotOwner(msg.sender);
@@ -205,6 +198,12 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
             revealedTypes[id] = revealType;
 
             // TODO: randomize traits values using chainlink & set the attributes for the token id
+            // (string eye, string hair, string face, string mouth) = requestRandomTraits()
+            // Metadata storage mdata = _metadata[id];
+            // mdata.attributeValues[0] = eye;
+            // mdata.attributeValues[1] = hair;
+            // mdata.attributeValues[2] = face;
+            // mdata.attributeValues[3] = mouth;
 
             // TODO: Verify & also check for onchain storage in another contract
             // if revealType == 2, then burn the token &
@@ -224,23 +223,19 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
         }
     }
 
-    function getSvg(uint256 tokenId) private view returns (string memory svg) {
+    function _getSvg(uint256 tokenId) private view returns (string memory svg) {
         uint8 _revealedType = revealedTypes[tokenId];
 
         // revealed type is 0 i.e. not revealed yet
         if (_revealedType == 0) {
             // give the unrevealed uri
-            svg = string(
-                abi.encodePacked(
-                    '<svg width="800px" height="800px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#F48024" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="miter"><polygon points="3 16 3 8 12 14 21 8 21 16 12 22 3 16" stroke-width="0" opacity="0.1" fill="#059cf7"></polygon><polygon points="21 8 21 16 12 22 3 16 3 8 12 2 21 8"></polygon><polyline points="3 8 12 14 12 22" stroke-linecap="round"></polyline><line x1="21" y1="8" x2="12" y2="14" stroke-linecap="round"></line></svg>'
-                )
-            );
+            svg =
+                '<svg width="800px" height="800px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#F48024" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="miter"><polygon points="3 16 3 8 12 14 21 8 21 16 12 22 3 16" stroke-width="0" opacity="0.1" fill="#059cf7"></polygon><polygon points="21 8 21 16 12 22 3 16 3 8 12 2 21 8"></polygon><polyline points="3 8 12 14 12 22" stroke-linecap="round"></polyline><line x1="21" y1="8" x2="12" y2="14" stroke-linecap="round"></line></svg>';
         }
         // in case of type = 1, 2
         else {
-            Metadata memory mdata = metadata[tokenId];
+            Metadata memory mdata = _metadata[tokenId];
 
-            // TODO: it should be decoded
             svg = string(
                 abi.encodePacked(
                     '<svg viewBox="0 0 58 58" style="enable-background:new 0 0 58 58;" xml:space="preserve"><g><path style="fill:',
@@ -277,21 +272,55 @@ contract SPNFT is ERC721, Owned, ReentrancyGuard {
         }
     }
 
-    // compare string
-    function compareString(string memory s1, string memory s2) private pure returns (bool isEqual) {
-        if (keccak256(bytes(s1)) == keccak256(bytes(s2))) {
-            isEqual = true;
-        } else {
-            isEqual = false;
+    // ===================== UTILITY ===========================
+
+    function _isBytes8ArrayElementEmpty(bytes8[4] memory arr) private view returns (bool) {
+        bool isEmpty = false;
+        for (uint256 i = 0; i < arr.length; ++i) {
+            if (arr[i].length == 0) {
+                isEmpty = true;
+                break;
+            }
         }
+
+        return isEmpty;
     }
 
-    // empty string
-    function isStringEmpty(string memory s1) private pure returns (bool isEmpty) {
-        if (keccak256(bytes(s1)) == keccak256(bytes(""))) {
-            isEmpty = true;
-        } else {
-            isEmpty = false;
-        }
+    /// @dev Get metadata with unrevealed image with encoding
+    /// @param id token id
+    function _getUnrevealedMetadataWEncoding(uint256 id) private view returns (string memory) {
+        string memory json = LibBase64.encode(
+            bytes(
+                string(
+                    abi.encodePacked(
+                        '{"name": "SP001",',
+                        '"description":"Story Protocol Mystery Box NFT","image": "',
+                        _getSvg(id),
+                        '",',
+                        '"attributes": [{"trait_type": "Shape","value": "Cube"},{"trait_type": "Borders","value": "Black"},{"trait_type": "Filled","value": "Orange"}]',
+                        "}"
+                    )
+                )
+            )
+        );
+
+        return string(abi.encodePacked("data:application/json;base64,", json));
+    }
+
+    /// @dev Get metadata with unrevealed image without encoding
+    /// @param id token id
+    function _getUnrevealedMetadataWoEncoding(uint256 id) private view returns (string memory) {
+        string memory json = string(
+            abi.encodePacked(
+                '{"name": "SP001",',
+                '"description":"Story Protocol Mystery Box NFT","image": "',
+                _getSvg(id),
+                '",',
+                '"attributes": [{"trait_type": "Shape","value": "Cube"},{"trait_type": "Borders","value": "Black"},{"trait_type": "Filled","value": "Orange"}]',
+                "}"
+            )
+        );
+
+        return json;
     }
 }

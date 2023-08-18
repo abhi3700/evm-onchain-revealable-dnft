@@ -18,7 +18,7 @@ https://book.getfoundry.sh/
 ### Build
 
 ```sh
-$ forge build
+$ forge build --via-ir
 ```
 
 ### Test
@@ -40,6 +40,14 @@ $ forge test --gas-report
 ```sh
 $ forge fmt
 ```
+
+### Contract size
+
+```sh
+$ forge build --sizes
+```
+
+> also need to add `--via-ir` flag to `forge build` command, if `stack too deep`.
 
 ### Gas Snapshots
 
