@@ -10,9 +10,11 @@ contract SPNFTScript is Script {
 
     function run() public {
         vm.startBroadcast();
-        // deploy Revealed SPNFT
+        // 1. deploy Revealed SPNFT
 
-        // deploy SPNFT with Revealed SPNFT contract
+        // 2. deploy SPNFT with Revealed SPNFT contract & chainlink details
+
+        // 3. transfer ownership of `RevealedSPNFT` to `SPNFT` for minting
 
         vm.stopBroadcast();
     }

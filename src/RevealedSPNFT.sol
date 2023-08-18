@@ -2,13 +2,14 @@
 pragma solidity 0.8.18;
 
 import {ERC721} from "solmate/tokens/ERC721.sol";
-import "openzeppelin-contracts/contracts/utils/Strings.sol";
+import {LibString} from "solmate/utils/LibString.sol";
+import {Owned} from "solmate/auth/Owned.sol";
 import {console2} from "forge-std/Test.sol";
 
 /// @title Revealed SP NFT contract
 /// @notice For "Separate Collection Revealing" approach.
-contract RevealedSPNFT is ERC721 {
-    using Strings for uint256;
+contract RevealedSPNFT is ERC721, Owned {
+    using LibString for uint256;
 
     // required for setting during deployment
     string public baseURI;
@@ -21,7 +22,7 @@ contract RevealedSPNFT is ERC721 {
     error InvalidToken(uint256); // Invalid Token ID
 
     /// _uri common base URI for the entire collection set during deployment
-    constructor(string memory _n, string memory _s, bytes memory _uri) ERC721(_n, _s) {
+    constructor(string memory _n, string memory _s, bytes memory _uri) ERC721(_n, _s) Owned(msg.sender) {
         if (keccak256(_uri) == keccak256(bytes(""))) {
             revert EmptyBaseURI();
         }
