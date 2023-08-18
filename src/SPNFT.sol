@@ -10,12 +10,18 @@ import {VRFConsumerBaseV2} from "chainlink/contracts/src/v0.8/vrf/VRFConsumerBas
 import {ConfirmedOwner} from "chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
 
 import {IRevealedSPNFT} from "./interfaces/IRevealedSPNFT.sol";
+import {ERC20} from "solmate/tokens/ERC20.sol";
 import {console2} from "forge-std/Test.sol";
 
-contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
+contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ERC20 {
     using LibString for uint256;
 
     // ===================== STORAGE ===========================
+    struct Stake {
+        bool isStaked;
+        uint32 accInterestStartTime; // time from when the accrued interest calculation starts, reset the time (to now) when claimed
+    }
+
     // NFT attribute value options for selection based on
     // random value generated chainlink VRF
     struct AttributeOptions {
@@ -34,6 +40,8 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
         bytes8[4] attributeValues;
     }
 
+    uint8 public constant APY = 5;
+
     AttributeOptions private _attributeOptions;
 
     // tokenId => Metadata
@@ -44,6 +52,9 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
     uint256 public tokenIds;
 
     IRevealedSPNFT public revealedSPNFT;
+
+    // tokenId => Stake
+    mapping(uint256 => Stake) stakedTokenIds;
 
     // --------------Chainlink VRF------------------
     struct RequestStatus {
@@ -89,9 +100,12 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
     event Burned(address indexed holder, uint256 indexed tokenId);
     event RequestSent(uint256 requestId, uint32 numWords);
     event RequestFulfilled(uint256 requestId, uint256[] randomWords);
+    event Staked(address indexed user, uint256 indexed tokenId);
+    event Claimed(address indexed user, uint256 indexed tokenId);
 
     // ===================== ERROR ===========================
     error EmptyName();
+    error EmptyNameOrSymbol();
     error AttributeOptionsMustBeFourAndNonEmptyElements();
     error NotOwner(address);
     error AlreadyRevealed();
@@ -99,6 +113,9 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
     error InvalidRSPNFTAddress(address);
     error RequestIdNotFound();
     error RequestIdAlreadyFulfilled();
+    error AlreadyStaked();
+    error NotStaked();
+    error InvalidTokenIdForStake(uint256);
 
     // ===================== CONSTRUCTOR ===========================
     constructor(
@@ -109,7 +126,7 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
         uint64 _subId,
         bytes32 _kHash,
         address _coordinatorContract
-    ) ERC721(_n, _s) VRFConsumerBaseV2(_coordinatorContract) ConfirmedOwner(msg.sender) {
+    ) ERC721(_n, _s) VRFConsumerBaseV2(_coordinatorContract) ConfirmedOwner(msg.sender) ERC20("SP Token", "SP", 18) {
         // check if contract
         uint256 size;
         assembly {
@@ -117,6 +134,10 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
         }
         if (size == 0) {
             revert InvalidRSPNFTAddress(rSPNFTAddress);
+        }
+
+        if (_isStringEmpty(_n) || _isStringEmpty(_s)) {
+            revert EmptyNameOrSymbol();
         }
 
         // sanitize attribute options
@@ -141,6 +162,9 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
     }
 
     // ===================== Getters ===========================
+
+    // /// @dev Contract name
+    // function getName()
 
     /// @dev tokenURI returns the metadata
     function tokenURI(uint256 id) public view virtual override returns (string memory) {
@@ -248,7 +272,7 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
     /// @dev Only Owner can
     ///     - mint next available token id
     ///     - set name, description of the NFT
-    function mint(address to, bytes32 _name, bytes32 _description) external onlyOwner {
+    function mint(address to, bytes32 _name, bytes32 _description) external payable onlyOwner {
         if (_name.length == 0) {
             revert EmptyName();
         }
@@ -388,6 +412,56 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
         emit RequestFulfilled(_requestId, _randomWords);
     }
 
+    /// @dev stake function
+    function stake(uint256 _tokenId) external nonReentrant {
+        Metadata memory mdata = _metadata[tokenIds];
+
+        // check if the token is revealed & the type is 1,
+        // as the type 2 is burned here & moved to other contract
+        if (!(mdata.revealType == 1)) {
+            revert InvalidTokenIdForStake(_tokenId);
+        }
+
+        // check for valid token id: owned or not by caller
+        ownerOf(_tokenId);
+
+        Stake storage stake = stakedTokenIds[_tokenId];
+
+        // check if token id already staked or not
+        if (stake.isStaked) {
+            revert AlreadyStaked();
+        }
+
+        stake.isStaked = true;
+        stake.accInterestStartTime = block.timestamp;
+
+        emit Staked(msg.sender, _tokenId);
+    }
+
+    /// @dev claim rewards for staked token Id
+    /// @param _tokenId token Id for which accrued interest rewards are to be claimed
+    function claimRewardsFor(uint256 _tokenId) external nonReentrant {
+        // check for valid token id: owned or not by caller
+        ownerOf(_tokenId);
+
+        Stake storage stake = stakedTokenIds[_tokenId];
+
+        // check if token id staked or not
+        if (!stake.isStaked) {
+            revert NotStaked();
+        }
+
+        uint256 x = 10000000e18;
+        uint256 accruedInterest = (x * APY) / 100;
+
+        // mint the accrued interest
+        ERC20._mint(to, accruedInterest);
+
+        emit RewardsClaimedFor(msg.sender, _tokenId);
+    }
+
+    // TODO: override all external setters: approve, transfer, transferFrom functions ensuring the tokens are not transferable or approvable
+
     // ===================== UTILITY ===========================
 
     function _isBytes8ArrayElementEmpty(bytes8[4] memory arr) private pure returns (bool) {
@@ -400,6 +474,14 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
         }
 
         return isEmpty;
+    }
+
+    function _isStringEmpty(string memory s1) private pure returns (bool) {
+        if (keccak256(bytes(s1)) == keccak256(bytes(""))) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /// @dev Get metadata with unrevealed image with encoding

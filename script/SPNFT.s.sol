@@ -16,6 +16,8 @@ contract SPNFTScript is Script {
 
         // 3. transfer ownership of `RevealedSPNFT` to `SPNFT` for minting
 
+        // 4. deploy staking contract with both the contracts (as they have revealed types 1 & 2)
+
         vm.stopBroadcast();
     }
 }
