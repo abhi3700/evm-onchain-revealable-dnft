@@ -6,6 +6,14 @@ import {SPNFT} from "../src/SPNFT.sol";
 import {RevealedSPNFT} from "../src/RevealedSPNFT.sol";
 
 contract SPNFTTest is Test {
+/// Mint
+/// - P | Admin mint to Anyone (itself/others) by paying in ETH
+/// - F | Admin mint to Anyone (itself/others) by not paying in ETH
+
+/// Burn
+/// - P | burn before staking
+/// - F | burn after staking
+
 // RevealedSPNFT public rSPNFT;
 // SPNFT public spNFT;
 

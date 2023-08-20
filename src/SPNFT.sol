@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import {ERC721} from "solmate/tokens/ERC721.sol";
 import {LibString} from "solmate/utils/LibString.sol";
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 import {LibBase64} from "./libs/LibBase64.sol";
@@ -10,17 +9,13 @@ import {VRFConsumerBaseV2} from "./dependencies/VRFConsumerBaseV2.sol";
 import {ConfirmedOwner} from "./dependencies/ConfirmedOwner.sol";
 
 import {IRevealedSPNFT} from "./interfaces/IRevealedSPNFT.sol";
-import {ERC20} from "solmate/tokens/ERC20.sol";
+import {NFTStaking} from "./NFTStaking.sol";
 import {console2} from "forge-std/Test.sol";
 
-contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ERC20 {
+contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
     using LibString for uint256;
 
     // ===================== STORAGE ===========================
-    struct Stake {
-        bool isStaked;
-        uint32 accInterestStartTime; // time from when the accrued interest calculation starts, reset the time (to now) when claimed
-    }
 
     // NFT attribute value options for selection based on
     // random value generated chainlink VRF
@@ -40,9 +35,6 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
         bytes8[4] attributeValues;
     }
 
-    uint8 public constant APY = 5;
-    uint256 public constant PURCHASE_PRICE = 5e18; // 5 ETH or ERC20
-
     AttributeOptions private _attributeOptions;
 
     // tokenId => Metadata
@@ -53,9 +45,6 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
     uint256 public tokenIds;
 
     IRevealedSPNFT public revealedSPNFT;
-
-    // tokenId => Stake
-    mapping(uint256 => Stake) stakedTokenIds;
 
     // --------------Chainlink VRF------------------
     struct RequestStatus {
@@ -101,8 +90,6 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
     event Burned(address indexed holder, uint256 indexed tokenId);
     event RequestSent(uint256 requestId, uint32 numWords);
     event RequestFulfilled(uint256 requestId, uint256[] randomWords);
-    event Staked(address indexed user, uint256 indexed tokenId);
-    event RewardsClaimedFor(address indexed user, uint256 indexed tokenId);
 
     // ===================== ERROR ===========================
     error EmptyName();
@@ -114,9 +101,7 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
     error InvalidRSPNFTAddress(address);
     error RequestIdNotFound();
     error RequestIdAlreadyFulfilled();
-    error AlreadyStaked();
-    error NotStaked();
-    error InvalidTokenIdForStake(uint256);
+    error TokenIdMustBeType1ForStake(uint256);
     error InsufficientETHForMinting();
     error ETHRefundFailed();
     error EmptyDescription();
@@ -130,7 +115,7 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
         uint64 _subId,
         bytes32 _kHash,
         address _coordinatorContract
-    ) ERC721(_n, _s) VRFConsumerBaseV2(_coordinatorContract) ConfirmedOwner(msg.sender) ERC20("SP Token", "SP", 18) {
+    ) VRFConsumerBaseV2(_coordinatorContract) ConfirmedOwner(msg.sender) NFTStaking(_n, _s) {
         // check if contract
         uint256 size;
         assembly {
@@ -317,6 +302,12 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
         if (msg.sender != ownerOf(id)) {
             revert NotOwner(msg.sender);
         }
+
+        // check if token id already staked, don't allow to burn
+        if (stakedTokenIds[id].isStaked) {
+            revert AlreadyStaked();
+        }
+
         _burn(id);
 
         emit Burned(msg.sender, id);
@@ -438,53 +429,23 @@ contract SPNFT is ERC721, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, ER
     function stake(uint256 _tokenId) external nonReentrant {
         Metadata memory mdata = _metadata[tokenIds];
 
+        // Stake only revealed tokens of type 1
         // check if the token is revealed & the type is 1,
         // as the type 2 is burned here & moved to other contract
         if (!(mdata.revealType == 1)) {
-            revert InvalidTokenIdForStake(_tokenId);
+            revert TokenIdMustBeType1ForStake(_tokenId);
         }
 
-        // check for valid token id: owned or not by caller
-        ownerOf(_tokenId);
-
-        Stake storage stake = stakedTokenIds[_tokenId];
-
-        // check if token id already staked or not
-        if (stake.isStaked) {
-            revert AlreadyStaked();
-        }
-
-        stake.isStaked = true;
-        stake.accInterestStartTime = uint32(block.timestamp);
-
-        emit Staked(msg.sender, _tokenId);
+        _stake(_tokenId);
     }
 
-    /// @dev claim rewards for staked token Id
-    /// @param _tokenId token Id for which accrued interest rewards are to be claimed
-    function claimRewardsFor(uint256 _tokenId) external nonReentrant {
-        // check for valid token id: owned or not by caller
-        ownerOf(_tokenId);
-
-        Stake storage stake = stakedTokenIds[_tokenId];
-
-        // check if token id staked or not
-        if (!stake.isStaked) {
-            revert NotStaked();
-        }
-
-        uint256 accruedInterest = (PURCHASE_PRICE * APY) / 100;
-
-        // reset the staked time to now so as to calculate the accrued interest from now.
-        stake.accInterestStartTime = uint32(block.timestamp);
-
-        // mint the accrued interest
-        ERC20._mint(msg.sender, accruedInterest);
-
-        emit RewardsClaimedFor(msg.sender, _tokenId);
+    /// @dev unstake & claim rewards token Id
+    /// @param _tokenId token Id for which accrued interest rewards are to be claimed & then unstake
+    function unstake(uint256 _tokenId) external nonReentrant {
+        _unstake(_tokenId);
     }
 
-    // TODO: override all external setters: approve, transfer, transferFrom functions ensuring the tokens are not transferable or approvable
+    // TODO: override all external setters: burn, approve, transfer, transferFrom functions ensuring the tokens are not transferable or approvable
 
     // ===================== UTILITY ===========================
 
