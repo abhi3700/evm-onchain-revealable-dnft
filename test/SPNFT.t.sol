@@ -11,6 +11,8 @@ contract SPNFTTest is Test {
     RevealedSPNFT public rSPNFT;
     SPNFT public spNFT;
 
+    uint256 public constant PURCHASE_PRICE = 5e15; // 0.005 ETH or ERC20
+
     address public constant ZERO_ADDRESS = address(0);
     address public constant ALICE = address(0xA11CE);
     address public constant BOB = address(0xB0B);
@@ -36,10 +38,10 @@ contract SPNFTTest is Test {
         spNFT = new SPNFT(
             "SP NFT", 
             "SPNFT",  
-            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
-            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
-            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
-            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            ["#634e34","#3d671d","#2e536f","#1c7847"],
+            ["#583322","#1e90ff","#eeb2d2","#4b0082"],
+            ["#f5f3e7","#ffcc99","#fde0d9","#808000"],
+            ["#d291bc","#ff0000","#ff7f50","#800020"],
             uint64(4562),
             0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
             0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
@@ -65,10 +67,10 @@ contract SPNFTTest is Test {
         spNFT = new SPNFT(
             "", 
             "SPNFT",  
-            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
-            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
-            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
-            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            ["#634e34","#3d671d","#2e536f","#1c7847"],
+            ["#583322","#1e90ff","#eeb2d2","#4b0082"],
+            ["#f5f3e7","#ffcc99","#fde0d9","#808000"],
+            ["#d291bc","#ff0000","#ff7f50","#800020"],
             uint64(4562),
             0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
             0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
@@ -82,10 +84,10 @@ contract SPNFTTest is Test {
         spNFT = new SPNFT(
             "SP NFT", 
             "",  
-            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
-            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
-            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
-            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            ["#634e34","#3d671d","#2e536f","#1c7847"],
+            ["#583322","#1e90ff","#eeb2d2","#4b0082"],
+            ["#f5f3e7","#ffcc99","#fde0d9","#808000"],
+            ["#d291bc","#ff0000","#ff7f50","#800020"],
             uint64(4562),
             0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
             0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
@@ -99,10 +101,10 @@ contract SPNFTTest is Test {
         spNFT = new SPNFT(
             "SP NFT", 
             "SPNFT",  
-            [bytes8(""),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
-            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
-            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
-            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            ["","#3d671d","#2e536f","#1c7847"],
+            ["#583322","#1e90ff","#eeb2d2","#4b0082"],
+            ["#f5f3e7","#ffcc99","#fde0d9","#808000"],
+            ["#d291bc","#ff0000","#ff7f50","#800020"],
             uint64(4562),
             0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
             0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
@@ -117,10 +119,10 @@ contract SPNFTTest is Test {
         spNFT = new SPNFT(
             "SP NFT", 
             "SPNFT",  
-            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
-            [bytes8("#583322"),bytes8("#1e90ff"),bytes8(""),bytes8("#4b0082")],
-            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
-            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            ["#634e34","#3d671d","#2e536f","#1c7847"],
+            ["#583322","#1e90ff","","#4b0082"],
+            ["#f5f3e7","#ffcc99","#fde0d9","#808000"],
+            ["#d291bc","#ff0000","#ff7f50","#800020"],
             uint64(4562),
             0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
             0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
@@ -135,10 +137,10 @@ contract SPNFTTest is Test {
         spNFT = new SPNFT(
             "SP NFT", 
             "SPNFT",  
-            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
-            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
-            [bytes8("#f5f3e7"),bytes8(""),bytes8("#fde0d9"),bytes8("#808000")],
-            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            ["#634e34","#3d671d","#2e536f","#1c7847"],
+            ["#583322","#1e90ff","#eeb2d2","#4b0082"],
+            ["#f5f3e7","","#fde0d9","#808000"],
+            ["#d291bc","#ff0000","#ff7f50","#800020"],
             uint64(4562),
             0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
             0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
@@ -152,10 +154,10 @@ contract SPNFTTest is Test {
         spNFT = new SPNFT(
             "SP NFT", 
             "SPNFT",  
-            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
-            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
-            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
-            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("")],
+            ["#634e34","#3d671d","#2e536f","#1c7847"],
+            ["#583322","#1e90ff","#eeb2d2","#4b0082"],
+            ["#f5f3e7","#ffcc99","#fde0d9","#808000"],
+            ["#d291bc","#ff0000","#ff7f50",""],
             uint64(4562),
             0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
             0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
@@ -170,10 +172,10 @@ contract SPNFTTest is Test {
         spNFT = new SPNFT(
             "SP NFT", 
             "SPNFT",  
-            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
-            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
-            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
-            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            ["#634e34","#3d671d","#2e536f","#1c7847"],
+            ["#583322","#1e90ff","#eeb2d2","#4b0082"],
+            ["#f5f3e7","#ffcc99","#fde0d9","#808000"],
+            ["#d291bc","#ff0000","#ff7f50","#800020"],
             uint64(4562),
             0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
             0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
@@ -212,6 +214,16 @@ contract SPNFTTest is Test {
         assertEq(spNFT.totalDepositedETH(), 0);
     }
 
+    // get name
+    function testGetName() public {
+        assertEq(spNFT.name(), "SP NFT");
+    }
+
+    // get name
+    function testGetSymbol() public {
+        assertEq(spNFT.symbol(), "SPNFT");
+    }
+
     // ===================== Setters ===========================
 
     // for receiving ether refund
@@ -232,6 +244,7 @@ contract SPNFTTest is Test {
         emit Minted(address(this), to, spNFT.tokenIds() + 1);
 
         spNFT.mint{value: 6e18}(to, bytes32("nft 1"), bytes32("good nft"));
+        assertEq(spNFT.totalDepositedETH(), PURCHASE_PRICE);
     }
 
     /// Non-Admin (fuzzed with) can't mint to Anyone (itself/others) by paying in ETH

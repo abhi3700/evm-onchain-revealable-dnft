@@ -20,10 +20,10 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     // NFT attribute value options for selection based on
     // random value generated chainlink VRF
     struct AttributeOptions {
-        bytes8[4] eyes;
-        bytes8[4] hair;
-        bytes8[4] face;
-        bytes8[4] mouth;
+        string[4] eyes;
+        string[4] hair;
+        string[4] face;
+        string[4] mouth;
     }
 
     // NFT metadata
@@ -32,7 +32,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         bytes32 name;
         bytes32 description;
         // string image;    // it is to be generated during revealing randomizing traits' values options (colors).
-        bytes8[4] attributeValues;
+        string[4] attributeValues;
     }
 
     AttributeOptions private _attributeOptions;
@@ -40,7 +40,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     // tokenId => Metadata
     mapping(uint256 => Metadata) private _metadata;
 
-    // no. of tokens minted so far & also mint the next available token id
+    // no. of tokens (unrevealed initially) minted so far & also mint the next available token id
     // NOTE: burnt NFTs doesn't decrement this no.
     uint256 public tokenIds;
 
@@ -114,10 +114,10 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         string memory _n,
         string memory _s,
         // AttributeOptions memory _aOptions,
-        bytes8[4] memory eyes,
-        bytes8[4] memory hair,
-        bytes8[4] memory face,
-        bytes8[4] memory mouth,
+        string[4] memory eyes,
+        string[4] memory hair,
+        string[4] memory face,
+        string[4] memory mouth,
         uint64 _subId,
         address _coordinatorContract,
         bytes32 _kHash,
@@ -140,8 +140,8 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         // length of each attribute options - eyes, hair, nose, mouth would be 4 for sure as declared above.
         if (
             !(
-                !_isBytes8ArrayElementEmpty(eyes) && !_isBytes8ArrayElementEmpty(hair)
-                    && !_isBytes8ArrayElementEmpty(face) && !_isBytes8ArrayElementEmpty(mouth)
+                !_isStringArrayElementEmpty(eyes) && !_isStringArrayElementEmpty(hair)
+                    && !_isStringArrayElementEmpty(face) && !_isStringArrayElementEmpty(mouth)
             )
         ) {
             revert AttributeOptionsMustBeFourAndNonEmptyElements();
@@ -160,6 +160,11 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     }
 
     // ===================== Getters ===========================
+
+    function metadata(uint256 tokenId) public view returns (Metadata memory) {
+        Metadata memory mdata = _metadata[tokenId];
+        return mdata;
+    }
 
     /// @dev tokenURI returns the metadata
     function tokenURI(uint256 id) public view override returns (string memory) {
@@ -185,20 +190,21 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
                             '{"name": "',
                             mdata.name,
                             '",',
-                            '"description":"',
+                            '"description": "',
                             mdata.description,
+                            '",',
                             '"image": "',
                             _getSvg(id),
                             '",',
-                            '"attributes": [{"trait_type": "Eyes", "value": ',
+                            '"attributes": [{"trait_type": "Eyes", "value": "',
                             mdata.attributeValues[0],
-                            "},",
-                            '{"trait_type": "Hair", "value": ',
+                            '"},',
+                            '{"trait_type": "Hair", "value": "',
                             mdata.attributeValues[1],
-                            "},",
-                            '{"trait_type": "Nose", "value": ',
+                            '"},',
+                            '{"trait_type": "Nose", "value": "',
                             mdata.attributeValues[2],
-                            "},",
+                            '"},',
                             '{"trait_type": "Mouth", "value": "',
                             mdata.attributeValues[3],
                             '"}',
@@ -247,7 +253,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         mdata.description = _description;
 
         uint256 refundableETH = msg.value - PURCHASE_PRICE;
-        totalDepositedETH += msg.value;
+        totalDepositedETH += PURCHASE_PRICE;
 
         _mint(to, tokenIds);
 
@@ -288,6 +294,10 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         // token exists
         ownerOf(id);
 
+        if (!(_revealType == 1 || _revealType == 2)) {
+            revert InvalidRevealType();
+        }
+
         // get the revealed type (to check already set or not)
         uint8 _revealedType = _metadata[id].revealType;
 
@@ -300,15 +310,9 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         // set revealType in `metadata`
         _metadata[id].revealType = _revealType;
 
-        // revealedType == 1 || 2
-        if (_revealedType == 1 || _revealedType == 2) {
-            // request random number for setting the metadata attributes (traits).
-            _requestRandomWords(_revealType, id);
-        }
-        // other than 0/1/2 revealed type
-        else {
-            revert InvalidRevealType();
-        }
+        // Only for revealedType == 1 or 2
+        // request random number for setting the metadata attributes (traits).
+        _requestRandomWords(_revealType, id);
     }
 
     /// Assumes the subscription is funded sufficiently.
@@ -349,12 +353,14 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
 
         // get traits options
         AttributeOptions memory traitsOptions = _attributeOptions;
-        bytes8 eye = traitsOptions.eyes[_randomWords[0] % 4];
-        bytes8 hair = traitsOptions.hair[_randomWords[1] % 4];
-        bytes8 face = traitsOptions.hair[_randomWords[1] % 4];
-        bytes8 mouth = traitsOptions.hair[_randomWords[1] % 4];
+        string memory eye = traitsOptions.eyes[_randomWords[0] % 4];
+        string memory hair = traitsOptions.hair[_randomWords[1] % 4];
+        string memory face = traitsOptions.hair[_randomWords[1] % 4];
+        string memory mouth = traitsOptions.hair[_randomWords[1] % 4];
 
-        // if reveal type = 1, 2
+        console2.log(eye, hair, face, mouth);
+
+        // if reveal type = 1 or 2
         if (requestStatus.revealType == 1 || requestStatus.revealType == 2) {
             // get as storage to modify
             Metadata storage mdata = _metadata[requestStatus.tokenId];
@@ -364,24 +370,23 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
             mdata.attributeValues[1] = hair;
             mdata.attributeValues[2] = face;
             mdata.attributeValues[3] = mouth;
-        }
-        // if revealType == 2
-        else if (requestStatus.revealType == 2) {
-            // burn from current contract
-            this.burn(requestStatus.tokenId);
 
-            // get as memory to read.
-            // NOTE: No storage for attribute values. Only name, description, revealType remain stored in this contract
-            Metadata memory mdata = _metadata[requestStatus.tokenId];
+            // if revealType = 2
+            if (requestStatus.revealType == 2) {
+                // burn from current contract
+                this.burn(requestStatus.tokenId);
 
-            // mint to `msg.sender` (original owner) into `RevealedSPNFT` contract with metadata values
-            revealedSPNFT.mint(
-                ownerOf(requestStatus.tokenId),
-                requestStatus.tokenId,
-                mdata.name,
-                mdata.description,
-                [eye, hair, face, mouth]
-            );
+                // get as memory to read.
+                // NOTE: No storage for attribute values. Only name, description, revealType remain stored in this contract
+                // mint to `msg.sender` (original owner) into `RevealedSPNFT` contract with metadata values
+                revealedSPNFT.mint(
+                    ownerOf(requestStatus.tokenId),
+                    requestStatus.tokenId,
+                    mdata.name,
+                    mdata.description,
+                    [eye, hair, face, mouth]
+                );
+            }
         }
         // can't be 0, but incorporated for security reasons [REDUNDANT]
         else {
@@ -413,10 +418,21 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
 
     // ===================== UTILITY ===========================
 
-    function _isBytes8ArrayElementEmpty(bytes8[4] memory arr) private pure returns (bool) {
+    // function _isBytes8ArrayElementEmpty(bytes8[4] memory arr) private pure returns (bool) {
+    //     bool isEmpty = false;
+    //     for (uint256 i = 0; i < arr.length; ++i) {
+    //         if (arr[i] == bytes8("")) {
+    //             isEmpty = true;
+    //             break;
+    //         }
+    //     }
+
+    //     return isEmpty;
+    // }
+    function _isStringArrayElementEmpty(string[4] memory arr) private pure returns (bool) {
         bool isEmpty = false;
         for (uint256 i = 0; i < arr.length; ++i) {
-            if (arr[i] == bytes8("")) {
+            if (_isStringEmpty(arr[i])) {
                 isEmpty = true;
                 break;
             }
@@ -433,17 +449,38 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         }
     }
 
-    function _isBytes8Empty(bytes8 b1) private pure returns (bool) {
-        if (keccak256(abi.encodePacked(b1)) == keccak256(bytes(""))) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+    // function _isBytes8Empty(bytes8 b1) private pure returns (bool) {
+    //     if (keccak256(abi.encodePacked(b1)) == keccak256(bytes(""))) {
+    //         return true;
+    //     } else {
+    //         return false;
+    //     }
+    // }
+
+    /// bytes32 (any bytes ...here bytes8) to string
+    // function _toString(bytes32 b1) private pure returns (string memory result) {
+    //     uint8 length = 0;
+    //     while (b1[length] != 0 && length < 32) {
+    //         ++length;
+    //     }
+    //     assembly {
+    //         result := mload(0x40)
+    //         // new "memory end" including padding (the string isn't larger than 32 bytes)
+    //         mstore(0x40, add(result, 0x40))
+    //         // store length in memory
+    //         mstore(result, length)
+    //         // write actual data
+    //         mstore(add(result, 0x20), b1)
+    //     }
+    // }
 
     function _getSvg(uint256 tokenId) private view returns (string memory svg) {
         Metadata memory mdata = _metadata[tokenId];
         uint8 _revealedType = mdata.revealType;
+
+        console2.log(
+            mdata.attributeValues[0], mdata.attributeValues[1], mdata.attributeValues[2], mdata.attributeValues[3]
+        );
 
         // revealed type is 0 i.e. not revealed yet
         if (_revealedType == 0) {

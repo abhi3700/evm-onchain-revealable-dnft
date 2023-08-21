@@ -10,7 +10,7 @@ abstract contract NFTStaking is ERC721 {
     using SafeTransferLib for ERC20;
 
     uint8 public constant APY = 5;
-    uint256 public constant PURCHASE_PRICE = 5e15; // 0.05 ETH or ERC20
+    uint256 public constant PURCHASE_PRICE = 5e15; // 0.005 ETH or ERC20
 
     ERC20 public erc20Token;
 

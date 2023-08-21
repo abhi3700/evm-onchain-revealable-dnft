@@ -21,12 +21,14 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
         bytes32 name;
         bytes32 description;
         // string image;    // it is to be generated during revealing randomizing traits' values options (colors).
-        bytes8[4] attributeValues;
+        string[4] attributeValues;
     }
 
-    // no. of tokens minted so far
+    // no. of tokens (revealed Type 2) minted so far
     // NOTE: burnt NFTs doesn't decrement this no.
     uint256 public tokenIds;
+
+    uint256 public totalDepositedETH;
 
     // tokenId => Metadata
     mapping(uint256 => Metadata) private _metadata;
@@ -62,20 +64,21 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
                         '{"name": "',
                         mdata.name,
                         '",',
-                        '"description":"',
+                        '"description": "',
                         mdata.description,
+                        '",',
                         '"image": "',
                         _getSvg(id),
                         '",',
-                        '"attributes": [{"trait_type": "Eyes", "value": ',
+                        '"attributes": [{"trait_type": "Eyes", "value": "',
                         mdata.attributeValues[0],
-                        "},",
-                        '{"trait_type": "Hair", "value": ',
+                        '"},',
+                        '{"trait_type": "Hair", "value": "',
                         mdata.attributeValues[1],
-                        "},",
-                        '{"trait_type": "Nose", "value": ',
+                        '"},',
+                        '{"trait_type": "Nose", "value": "',
                         mdata.attributeValues[2],
-                        "},",
+                        '"},',
                         '{"trait_type": "Mouth", "value": "',
                         mdata.attributeValues[3],
                         '"}',
@@ -91,7 +94,7 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
     /// @dev Only Owner can
     ///     - mint the exact same token id as `SPNFT` contract
     ///     - set name, description, attributes of the NFT
-    function mint(address to, uint256 id, bytes32 _name, bytes32 _description, bytes8[4] memory attributeValues)
+    function mint(address to, uint256 id, bytes32 _name, bytes32 _description, string[4] memory attributeValues)
         external
         payable
         onlyOwner
@@ -110,7 +113,7 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
         }
 
         // check for non-empty elements inside attribute values
-        if (_isBytes8ArrayElementEmpty(attributeValues)) {
+        if (_isStringArrayElementEmpty(attributeValues)) {
             revert EmptyAttributeValues();
         }
 
@@ -125,6 +128,7 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
         ++tokenIds;
 
         uint256 refundableETH = msg.value - PURCHASE_PRICE;
+        totalDepositedETH += PURCHASE_PRICE;
 
         _mint(to, id);
 
@@ -158,20 +162,38 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
         _unstake(_tokenId);
     }
 
-    // TODO: override all external setters: approve, transfer, transferFrom functions ensuring the tokens are not transferable or approvable
-
     // ===================== UTILITY ===========================
 
-    function _isBytes8ArrayElementEmpty(bytes8[4] memory arr) private pure returns (bool) {
+    // function _isBytes8ArrayElementEmpty(bytes8[4] memory arr) private pure returns (bool) {
+    //     bool isEmpty = false;
+    //     for (uint256 i = 0; i < arr.length; ++i) {
+    //         if (arr[i].length == 0) {
+    //             isEmpty = true;
+    //             break;
+    //         }
+    //     }
+
+    //     return isEmpty;
+    // }
+
+    function _isStringArrayElementEmpty(string[4] memory arr) private pure returns (bool) {
         bool isEmpty = false;
         for (uint256 i = 0; i < arr.length; ++i) {
-            if (arr[i].length == 0) {
+            if (_isStringEmpty(arr[i])) {
                 isEmpty = true;
                 break;
             }
         }
 
         return isEmpty;
+    }
+
+    function _isStringEmpty(string memory s1) private pure returns (bool) {
+        if (keccak256(bytes(s1)) == keccak256(bytes(""))) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     function _getSvg(uint256 tokenId) private view returns (string memory svg) {
