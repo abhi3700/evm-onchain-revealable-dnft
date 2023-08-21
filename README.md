@@ -18,7 +18,7 @@ https://book.getfoundry.sh/
 ### Build
 
 ```sh
-$ forge build --via-ir
+$ forge build
 ```
 
 ### Test
@@ -33,6 +33,14 @@ To view gas-usage in table format:
 
 ```sh
 $ forge test --gas-report
+```
+
+#### Fork testing
+
+On Sepolia testnet:
+
+```sh
+$ forge test --mp test/sepolia/SPNFTTest.t.sol --fork-url $SEPOLIA_RPC_URL
 ```
 
 ### Format

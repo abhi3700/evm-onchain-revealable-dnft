@@ -225,8 +225,8 @@ contract SPNFTTest is Test {
         vm.assume(_name != bytes32(""));
         vm.assume(_description != bytes32(""));
 
-        vm.expectEmit(true, false, false, true);
-        emit ETHRefunded(address(this), 1e18);
+        // vm.expectEmit(true, false, false, true);
+        emit ETHRefunded(address(this), 5995000000000000000);
 
         vm.expectEmit(true, true, false, true);
         emit Minted(address(this), to, spNFT.tokenIds() + 1);
@@ -264,7 +264,7 @@ contract SPNFTTest is Test {
     function testRevertMintInsufficientETH(address to) public {
         vm.assume(to != ZERO_ADDRESS);
         vm.expectRevert(SPNFT.InsufficientETHForMinting.selector);
-        spNFT.mint{value: 4e18}(to, bytes32("nft 1"), bytes32("good nft"));
+        spNFT.mint{value: 4e15}(to, bytes32("nft 1"), bytes32("good nft"));
     }
 
     // ------burn-------

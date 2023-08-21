@@ -1,5 +1,7 @@
 /* 
-    Get metadata & image 
+    Get metadata & image
+
+    View output by running on CLI: `$ node getMetadataImage.js` in `scripts/` folder.
 */
 
 const base64EncodedJson =
