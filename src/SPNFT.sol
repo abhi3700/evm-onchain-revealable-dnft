@@ -46,7 +46,6 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
 
     IRevealedSPNFT public revealedSPNFT;
 
-    // --------------Chainlink VRF------------------
     struct RequestStatus {
         bool fulfilled; // whether the request has been successfully fulfilled
         bool exists; // whether a requestId exists
@@ -85,11 +84,14 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     // Cannot exceed VRFCoordinatorV2.MAX_NUM_WORDS.
     uint32 private _numWords = 4;
 
+    uint256 public totalDepositedETH;
+
     // ===================== EVENT ===========================
-    event Minted(address indexed caller, address indexed to, uint256 indexed tokenId);
-    event Burned(address indexed holder, uint256 indexed tokenId);
-    event RequestSent(uint256 requestId, uint32 numWords);
-    event RequestFulfilled(uint256 requestId, uint256[] randomWords);
+    event Minted(address indexed mintedBy, address indexed mintedTo, uint256 indexed tokenId);
+    event Burned(address indexed BurnedBy, uint256 indexed tokenId);
+    event RequestSent(uint256 indexed requestId, uint32 numWords);
+    event RequestFulfilled(uint256 indexed requestId, uint256[] randomWords);
+    event ETHRefunded(address indexed mintedBy, uint256 ethAmount);
 
     // ===================== ERROR ===========================
     error EmptyName();
@@ -105,15 +107,20 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     error InsufficientETHForMinting();
     error ETHRefundFailed();
     error EmptyDescription();
+    error ZeroAddress();
 
     // ===================== CONSTRUCTOR ===========================
     constructor(
         string memory _n,
         string memory _s,
-        AttributeOptions memory _aOptions,
+        // AttributeOptions memory _aOptions,
+        bytes8[4] memory eyes,
+        bytes8[4] memory hair,
+        bytes8[4] memory face,
+        bytes8[4] memory mouth,
         uint64 _subId,
-        bytes32 _kHash,
         address _coordinatorContract,
+        bytes32 _kHash,
         address _erc20TokenAddress
     ) VRFConsumerBaseV2(_coordinatorContract) ConfirmedOwner(msg.sender) NFTStaking(_n, _s, _erc20TokenAddress) {
         // check if contract
@@ -133,14 +140,14 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         // length of each attribute options - eyes, hair, nose, mouth would be 4 for sure as declared above.
         if (
             !(
-                !_isBytes8ArrayElementEmpty(_aOptions.eyes) && !_isBytes8ArrayElementEmpty(_aOptions.hair)
-                    && !_isBytes8ArrayElementEmpty(_aOptions.face) && !_isBytes8ArrayElementEmpty(_aOptions.mouth)
+                !_isBytes8ArrayElementEmpty(eyes) && !_isBytes8ArrayElementEmpty(hair)
+                    && !_isBytes8ArrayElementEmpty(face) && !_isBytes8ArrayElementEmpty(mouth)
             )
         ) {
             revert AttributeOptionsMustBeFourAndNonEmptyElements();
         }
 
-        _attributeOptions = _aOptions;
+        _attributeOptions = AttributeOptions(eyes, hair, face, mouth);
 
         // deploy Revealed SP NFT contract
         RevealedSPNFT rSPNFT = new RevealedSPNFT("Revealed SP NFT", "RSPNFT", _erc20TokenAddress);
@@ -265,11 +272,15 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     ///     - mint next available token id
     ///     - set name, description of the NFT
     function mint(address to, bytes32 _name, bytes32 _description) external payable onlyOwner {
-        if (_name.length == 0) {
+        if (to == address(0)) {
+            revert ZeroAddress();
+        }
+
+        if (_name == bytes32("")) {
             revert EmptyName();
         }
 
-        if (_description.length == 0) {
+        if (_description == bytes32("")) {
             revert EmptyDescription();
         }
 
@@ -286,6 +297,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         mdata.description = _description;
 
         uint256 refundableETH = msg.value - PURCHASE_PRICE;
+        totalDepositedETH += msg.value;
 
         _mint(to, tokenIds);
 
@@ -294,6 +306,8 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
             if (!success) {
                 revert ETHRefundFailed();
             }
+
+            emit ETHRefunded(msg.sender, refundableETH);
         }
 
         emit Minted(msg.sender, to, tokenIds);
@@ -452,7 +466,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     function _isBytes8ArrayElementEmpty(bytes8[4] memory arr) private pure returns (bool) {
         bool isEmpty = false;
         for (uint256 i = 0; i < arr.length; ++i) {
-            if (arr[i].length == 0) {
+            if (arr[i] == bytes8("")) {
                 isEmpty = true;
                 break;
             }
@@ -463,6 +477,14 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
 
     function _isStringEmpty(string memory s1) private pure returns (bool) {
         if (keccak256(bytes(s1)) == keccak256(bytes(""))) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function _isBytes8Empty(bytes8 b1) private pure returns (bool) {
+        if (keccak256(abi.encodePacked(b1)) == keccak256(bytes(""))) {
             return true;
         } else {
             return false;

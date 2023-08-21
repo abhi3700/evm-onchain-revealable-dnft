@@ -16,7 +16,7 @@ contract SPNFTScript is Script {
         //   - created RSPNFT contract
         //     - linked ERC20 (into NFTStaking) to RSPNFT
 
-        // NOTE: There can be 1 common function for transferring tokens at once.
+        // NOTE: There can be 1 common function created for transferring tokens at once.
         // 3. transfer 1 M tokens to SPNFT contract
         // 4. transfer 1 M tokens to RSPNFT contract
 

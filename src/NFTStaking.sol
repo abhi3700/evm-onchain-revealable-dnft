@@ -3,7 +3,6 @@ pragma solidity 0.8.18;
 
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
-import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {console2} from "forge-std/Test.sol";
 

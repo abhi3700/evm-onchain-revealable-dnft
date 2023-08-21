@@ -2,128 +2,288 @@
 pragma solidity 0.8.18;
 
 import {Test, console2} from "forge-std/Test.sol";
+import {SPToken} from "../src/SPToken.sol";
 import {SPNFT} from "../src/SPNFT.sol";
 import {RevealedSPNFT} from "../src/RevealedSPNFT.sol";
 
 contract SPNFTTest is Test {
-/// Mint
-/// - P | Admin mint to Anyone (itself/others) by paying in ETH
-/// - F | Admin mint to Anyone (itself/others) by not paying in ETH
+    SPToken public spToken;
+    RevealedSPNFT public rSPNFT;
+    SPNFT public spNFT;
 
-/// Burn
-/// - P | burn before staking
-/// - F | burn after staking
+    address public constant ZERO_ADDRESS = address(0);
+    address public constant ALICE = address(0xA11CE);
+    address public constant BOB = address(0xB0B);
+    address public constant CHARLIE = address(0xC11A11E);
 
-// RevealedSPNFT public rSPNFT;
-// SPNFT public spNFT;
+    // ===================== EVENT ===========================
+    event Minted(address indexed mintedBy, address indexed mintedTo, uint256 indexed tokenId);
+    event Burned(address indexed BurnedBy, uint256 indexed tokenId);
+    event RequestSent(uint256 indexed requestId, uint32 numWords);
+    event RequestFulfilled(uint256 indexed requestId, uint256[] randomWords);
+    event ETHRefunded(address indexed mintedBy, uint256 ethAmount);
 
-// address public constant ALICE = address(0x1);
+    // ===================== CONSTRUCTOR ===========================
+    function setUp() public {
+        // 1. deploy ERC20
+        spToken = new SPToken("SP Token", "SPT", 18);
+        // 2. deploy SPNFT
+        //   - linked ERC20 (into NFTStaking) to SPNFT
+        //   - created RSPNFT contract
+        //     - linked ERC20 (into NFTStaking) to RSPNFT
 
-// event Minted(address indexed caller, address indexed to, uint256 indexed tokenId);
-// event Burned(address indexed holder, uint256 indexed tokenId);
+        /// chainlink 3 params parsed for sepolia network. Goerli faucets difficult to get as mainnet balance required > 0.1 ETH.
+        spNFT = new SPNFT(
+            "SP NFT", 
+            "SPNFT",  
+            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
+            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
+            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
+            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            uint64(4562),
+            0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
+            0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
+            address(spToken)
+        );
 
-// function setUp() public {
-//     rSPNFT =
-//         new RevealedSPNFT("Revealed SP NFT", "RSPNFT", bytes("https://white-chilly-koi-665.mypinata.cloud/ipfs/"));
-//     spNFT =
-//         new SPNFT(address(rSPNFT), "SP NFT", "SPNFT", bytes("https://white-chilly-koi-665.mypinata.cloud/ipfs/"));
+        address rSPNFTAddress = address(spNFT.revealedSPNFT());
 
-//     assertEq(spNFT.name(), "SP NFT");
-//     assertEq(spNFT.symbol(), "SPNFT");
+        assertEq(spToken.balanceOf(address(this)), 1e24, "mismatch in owner's balance");
 
-//     // for calling function
-//     deal(ALICE, 100);
-//     assertEq(ALICE.balance, 100);
+        // NOTE: There can be 1 common function created for transferring tokens at once.
+        // 3. transfer 10k tokens to SPNFT contract
+        spToken.transfer(address(spNFT), 1e22);
+        assertEq(spToken.balanceOf(address(spNFT)), 1e22, "mismatch in transfer tokens to SPNFT");
+        // 4. transfer 10k tokens to RSPNFT contract
+        spToken.transfer(rSPNFTAddress, 1e22);
+        assertEq(spToken.balanceOf(rSPNFTAddress), 1e22, "mismatch in transfer tokens to RSPNFT");
+    }
 
-//     // mint some nfts
-//     spNFT.mint(ALICE, 1);
-//     assertEq(spNFT.ownerOf(1), ALICE);
-// }
+    /// deploy SPNFT with empty name fails
+    function testSetUpEmptyName() public {
+        vm.expectRevert(SPNFT.EmptyNameOrSymbol.selector);
+        spNFT = new SPNFT(
+            "", 
+            "SPNFT",  
+            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
+            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
+            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
+            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            uint64(4562),
+            0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
+            0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
+            address(spToken)
+        );
+    }
 
-// // == Reveal
-// // TODO:
+    /// deploy SPNFT with empty symbol fails
+    function testSetUpEmptySymbol() public {
+        vm.expectRevert(SPNFT.EmptyNameOrSymbol.selector);
+        spNFT = new SPNFT(
+            "SP NFT", 
+            "",  
+            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
+            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
+            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
+            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            uint64(4562),
+            0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
+            0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
+            address(spToken)
+        );
+    }
+    // deploy SPNFT fails with atleast 1 attribute option values as empty eyes
 
-// // === tokenURI
-// function testRevertTokenURIInvalidToken() public {
-//     vm.expectRevert("NOT_MINTED");
-//     spNFT.tokenURI(2);
-// }
+    function testSetUpEmptyAttributeOptionsEyes() public {
+        vm.expectRevert(SPNFT.AttributeOptionsMustBeFourAndNonEmptyElements.selector);
+        spNFT = new SPNFT(
+            "SP NFT", 
+            "SPNFT",  
+            [bytes8(""),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
+            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
+            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
+            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            uint64(4562),
+            0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
+            0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
+            address(spToken)
+        );
+    }
 
-// function testTokenURIWorksForUnrevealed() public {
-//     assertEq(
-//         spNFT.tokenURI(1),
-//         "https://white-chilly-koi-665.mypinata.cloud/ipfs/QmVzu86nv6wUbUgFxBdeQt9954yf4Ty8eFdYPfA5Cu1M8o/mystery_box.json"
-//     );
-// }
+    // deploy SPNFT fails with atleast 1 attribute option values as empty hair
 
-// function testTokenURIWorksForRevealed1() public {
-//     spNFT.revealToken(1, uint8(1));
-//     assertEq(spNFT.tokenURI(1), "https://white-chilly-koi-665.mypinata.cloud/ipfs/1");
-// }
+    function testSetUpEmptyAttributeOptionsHair() public {
+        vm.expectRevert(SPNFT.AttributeOptionsMustBeFourAndNonEmptyElements.selector);
+        spNFT = new SPNFT(
+            "SP NFT", 
+            "SPNFT",  
+            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
+            [bytes8("#583322"),bytes8("#1e90ff"),bytes8(""),bytes8("#4b0082")],
+            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
+            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            uint64(4562),
+            0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
+            0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
+            address(spToken)
+        );
+    }
 
-// // === mint
+    // deploy SPNFT fails with atleast 1 attribute option values as empty face
 
-// function testRevertMintAlreadyMintedToken() public {
-//     vm.expectRevert("ALREADY_MINTED");
-//     spNFT.mint(ALICE, 1);
-// }
+    function testSetUpEmptyAttributeOptionsFace() public {
+        vm.expectRevert(SPNFT.AttributeOptionsMustBeFourAndNonEmptyElements.selector);
+        spNFT = new SPNFT(
+            "SP NFT", 
+            "SPNFT",  
+            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
+            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
+            [bytes8("#f5f3e7"),bytes8(""),bytes8("#fde0d9"),bytes8("#808000")],
+            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            uint64(4562),
+            0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
+            0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
+            address(spToken)
+        );
+    }
 
-// function testRevertMintByNonAdmin() public {
-//     vm.prank(ALICE);
-//     vm.expectRevert("UNAUTHORIZED");
-//     spNFT.mint(ALICE, 2);
-// }
+    // deploy SPNFT fails with atleast 1 attribute option values as empty mouth
+    function testSetUpEmptyAttributeOptionsMouth() public {
+        vm.expectRevert(SPNFT.AttributeOptionsMustBeFourAndNonEmptyElements.selector);
+        spNFT = new SPNFT(
+            "SP NFT", 
+            "SPNFT",  
+            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
+            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
+            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
+            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("")],
+            uint64(4562),
+            0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
+            0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
+            address(spToken)
+        );
+    }
 
-// function testMintWorks() public {
-//     vm.expectEmit(true, true, true, true);
-//     emit Minted(address(this), ALICE, 2);
-//     spNFT.mint(ALICE, 2);
-//     assertEq(spNFT.ownerOf(2), ALICE);
-// }
+    // deploy SPNFT fails with invalid contract address
+    function testSetUpInvalidTokenAddress() public {
+        // get EOA address from `$ cast wallet new` command
+        vm.expectRevert(abi.encodeWithSignature("InvalidERC20(address)", 0x0D0E8357424B4E9415EC19305A793aC2839471FD));
+        spNFT = new SPNFT(
+            "SP NFT", 
+            "SPNFT",  
+            [bytes8("#634e34"),bytes8("#3d671d"),bytes8("#2e536f"),bytes8("#1c7847")],
+            [bytes8("#583322"),bytes8("#1e90ff"),bytes8("#eeb2d2"),bytes8("#4b0082")],
+            [bytes8("#f5f3e7"),bytes8("#ffcc99"),bytes8("#fde0d9"),bytes8("#808000")],
+            [bytes8("#d291bc"),bytes8("#ff0000"),bytes8("#ff7f50"),bytes8("#800020")],
+            uint64(4562),
+            0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
+            0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
+            0x0D0E8357424B4E9415EC19305A793aC2839471FD
+        );
+    }
 
-// function testMintTwiceSuccessively() public {
-//     spNFT.mint(ALICE, 2);
-//     assertEq(spNFT.ownerOf(2), ALICE);
+    // ===================== Getters ===========================
 
-//     spNFT.mint(ALICE, 3);
-//     assertEq(spNFT.ownerOf(3), ALICE);
+    /// TODO: get token URI
+    function testGetTokenURI() public {}
 
-//     assertEq(spNFT.balanceOf(ALICE), 3);
-// }
+    function testGetTokenIDsMinted() public {
+        assertEq(spNFT.tokenIds(), 0);
+    }
 
-// function testMintTwiceSuccessivelyWithTimeGap() public {
-//     spNFT.mint(ALICE, 2);
-//     assertEq(spNFT.ownerOf(2), ALICE);
-//     assertEq(block.timestamp, 1);
+    /// get total deposited ETH
+    function testGetTotalDepositedETH() public {
+        assertEq(spNFT.totalDepositedETH(), 0);
+    }
 
-//     // set time to 4
-//     vm.warp(4);
-//     assertEq(block.timestamp, 4);
-//     spNFT.mint(ALICE, 3);
-//     assertEq(spNFT.ownerOf(3), ALICE);
+    // ===================== Setters ===========================
 
-//     // forwarded time by 10s from last tstamp
-//     skip(10);
-//     spNFT.mint(ALICE, 4);
-//     assertEq(spNFT.ownerOf(4), ALICE);
+    // for receiving ether refund
+    receive() external payable {}
 
-//     assertEq(spNFT.balanceOf(ALICE), 4);
-// }
+    // ------mint-------
+    /// Admin mint to Anyone (itself/others) via fuzzing address by paying in ETH > PURCHASE_PRICE
+    // function testMintToAnyonePayingETH(address to) public {
+    function testMintToAnyonePayingETH(address to, bytes32 _name, bytes32 _description) public {
+        vm.assume(to != ZERO_ADDRESS);
+        vm.assume(_name != bytes32(""));
+        vm.assume(_description != bytes32(""));
 
-// // === burn
+        vm.expectEmit(true, false, false, true);
+        emit ETHRefunded(address(this), 1e18);
 
-// /// address who doesn't own the nft token id, can't burn
-// function testBurnFailsByNonOwner() public {
-//     vm.expectRevert(abi.encodeWithSignature("NotOwner(address)", address(this)));
-//     spNFT.burn(1);
-// }
+        vm.expectEmit(true, true, false, true);
+        emit Minted(address(this), to, spNFT.tokenIds() + 1);
 
-// /// address who owns the nft token id, can only burn
-// function testBurnWorks() public {
-//     vm.expectEmit(true, true, true, true);
-//     emit Burned(ALICE, 1);
-//     vm.prank(ALICE);
-//     spNFT.burn(1);
-//     assertEq(spNFT.balanceOf(ALICE), 0);
-// }
+        spNFT.mint{value: 6e18}(to, bytes32("nft 1"), bytes32("good nft"));
+    }
+
+    /// Non-Admin (fuzzed with) can't mint to Anyone (itself/others) by paying in ETH
+    function testRevertNonAdminMintToAnyonePayingETH(address to) public {
+        vm.assume(to != ZERO_ADDRESS);
+        vm.expectRevert("Only callable by owner");
+        hoax(to, 6e18);
+        spNFT.mint{value: 6e18}(to, bytes32("nft 1"), bytes32("good nft"));
+    }
+
+    /// Admin can't mint to ZERO Address by paying in ETH
+    function testRevertMintToZeroAddress() public {
+        vm.expectRevert(SPNFT.ZeroAddress.selector);
+        spNFT.mint{value: 6e18}(ZERO_ADDRESS, bytes32("nft 1"), bytes32("good nft"));
+    }
+
+    /// Admin can't mint Token (w Empty name) to Anyone (itself/others) by paying in ETH
+    function testRevertMintTokenWEmptyName() public {
+        vm.expectRevert(SPNFT.EmptyName.selector);
+        spNFT.mint{value: 6e18}(ALICE, bytes32(""), bytes32("good nft"));
+    }
+
+    /// Admin can't mint Token (w Empty description) to Anyone (itself/others) by paying in ETH
+    function testRevertMintTokenWEmptyDescription() public {
+        vm.expectRevert(SPNFT.EmptyDescription.selector);
+        spNFT.mint{value: 6e18}(ALICE, bytes32("nft 1"), bytes32(""));
+    }
+
+    /// Admin can't mint to Anyone (itself/others) by paying in ETH less than PURCHASE_PRICE
+    function testRevertMintInsufficientETH(address to) public {
+        vm.assume(to != ZERO_ADDRESS);
+        vm.expectRevert(SPNFT.InsufficientETHForMinting.selector);
+        spNFT.mint{value: 4e18}(to, bytes32("nft 1"), bytes32("good nft"));
+    }
+
+    // ------burn-------
+    /// Token owner burns after mint
+    function testBurnAfterMint() public {
+        // mint successfully
+        spNFT.mint{value: 6e18}(ALICE, bytes32("nft 1"), bytes32("good nft"));
+
+        // burn
+        vm.expectEmit(true, false, false, true);
+        emit Burned(ALICE, 1);
+        vm.prank(ALICE);
+        spNFT.burn(1);
+    }
+
+    /// Account (not the Token owner of given id) fails to burn the token id after mint
+    function testRevertOthersBurnAfterMintedToAlice(address by) public {
+        vm.assume(by != ALICE);
+
+        // mint successfully
+        spNFT.mint{value: 6e18}(ALICE, bytes32("nft 1"), bytes32("good nft"));
+
+        vm.expectRevert(abi.encodeWithSignature("NotOwner(address)", by));
+        vm.prank(by);
+        spNFT.burn(1);
+    }
+
+    /// TODO: Token owner can't burn if token id is staked
+    function testBurnRevertsAfterStaked() public {}
+
+    // ------stake-------
+
+    /// User with tokens revealed as type 1 can only stake
+    function testStake() public {}
+
+    // ------unstake-------
+    /// User with staked token can only unstake & claim rewards simultaneously
+    function testUnstake() public {}
 }
