@@ -183,7 +183,7 @@ contract SPNFTTest is Test {
 
     // ===================== Getters ===========================
 
-    // get token URI
+    // get token URI for token 0 i.e. by default it's mystery box
     function testGetTokenURI() public {
         // mint successfully
         spNFT.mint{value: 6e18}(ALICE, bytes32("nft 1"), bytes32("good nft"));
@@ -192,7 +192,7 @@ contract SPNFTTest is Test {
         string memory tokenUri = spNFT.tokenURI(tokenIdMinted);
         assertEq(
             tokenUri,
-            "data:application/json;base64,eyJuYW1lIjogIlNQMDAxIiwiZGVzY3JpcHRpb24iOiJTdG9yeSBQcm90b2NvbCBNeXN0ZXJ5IEJveCBORlQiLCJpbWFnZSI6ICI8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9IiNGNDgwMjQiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiPjxwb2x5Z29uIHBvaW50cz0iMyAxNiAzIDggMTIgMTQgMjEgOCAyMSAxNiAxMiAyMiAzIDE2IiBzdHJva2Utd2lkdGg9IjAiIG9wYWNpdHk9IjAuMSIgZmlsbD0iIzA1OWNmNyI+PC9wb2x5Z29uPjxwb2x5Z29uIHBvaW50cz0iMjEgOCAyMSAxNiAxMiAyMiAzIDE2IDMgOCAxMiAyIDIxIDgiPjwvcG9seWdvbj48cG9seWxpbmUgcG9pbnRzPSIzIDggMTIgMTQgMTIgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PC9wb2x5bGluZT48bGluZSB4MT0iMjEiIHkxPSI4IiB4Mj0iMTIiIHkyPSIxNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48L2xpbmU+PC9zdmc+IiwiYXR0cmlidXRlcyI6IFt7InRyYWl0X3R5cGUiOiAiU2hhcGUiLCJ2YWx1ZSI6ICJDdWJlIn0seyJ0cmFpdF90eXBlIjogIkJvcmRlcnMiLCJ2YWx1ZSI6ICJCbGFjayJ9LHsidHJhaXRfdHlwZSI6ICJGaWxsZWQiLCJ2YWx1ZSI6ICJPcmFuZ2UifV19"
+            "data:application/json;base64,eyJuYW1lIjogIlNQMDAxIiwiZGVzY3JpcHRpb24iOiJTdG9yeSBQcm90b2NvbCBNeXN0ZXJ5IEJveCBORlQiLCJpbWFnZSI6ICI8c3ZnIHdpZHRoPVwiODAwcHhcIiBoZWlnaHQ9XCI4MDBweFwiIHZpZXdCb3g9XCIwIDAgMjQgMjRcIiB4bWxucz1cImh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnXCIgZmlsbD1cIiNGNDgwMjRcIiBzdHJva2U9XCIjMDAwMDAwXCIgc3Ryb2tlLXdpZHRoPVwiMVwiIHN0cm9rZS1saW5lY2FwPVwicm91bmRcIiBzdHJva2UtbGluZWpvaW49XCJtaXRlclwiPjxwb2x5Z29uIHBvaW50cz1cIjMgMTYgMyA4IDEyIDE0IDIxIDggMjEgMTYgMTIgMjIgMyAxNlwiIHN0cm9rZS13aWR0aD1cIjBcIiBvcGFjaXR5PVwiMC4xXCIgZmlsbD1cIiMwNTljZjdcIj48L3BvbHlnb24+PHBvbHlnb24gcG9pbnRzPVwiMjEgOCAyMSAxNiAxMiAyMiAzIDE2IDMgOCAxMiAyIDIxIDhcIj48L3BvbHlnb24+PHBvbHlsaW5lIHBvaW50cz1cIjMgOCAxMiAxNCAxMiAyMlwiIHN0cm9rZS1saW5lY2FwPVwicm91bmRcIj48L3BvbHlsaW5lPjxsaW5lIHgxPVwiMjFcIiB5MT1cIjhcIiB4Mj1cIjEyXCIgeTI9XCIxNFwiIHN0cm9rZS1saW5lY2FwPVwicm91bmRcIj48L2xpbmU+PC9zdmc+IiwiYXR0cmlidXRlcyI6IFt7InRyYWl0X3R5cGUiOiAiU2hhcGUiLCJ2YWx1ZSI6ICJDdWJlIn0seyJ0cmFpdF90eXBlIjogIkJvcmRlcnMiLCJ2YWx1ZSI6ICJCbGFjayJ9LHsidHJhaXRfdHlwZSI6ICJGaWxsZWQiLCJ2YWx1ZSI6ICJPcmFuZ2UifV19"
         );
     }
 
