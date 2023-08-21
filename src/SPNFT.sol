@@ -7,7 +7,7 @@ import {LibBase64} from "./libs/LibBase64.sol";
 import {VRFCoordinatorV2Interface} from "./dependencies/VRFCoordinatorV2Interface.sol";
 import {VRFConsumerBaseV2} from "./dependencies/VRFConsumerBaseV2.sol";
 import {ConfirmedOwner} from "./dependencies/ConfirmedOwner.sol";
-
+import {RevealedSPNFT} from "./RevealedSPNFT.sol";
 import {IRevealedSPNFT} from "./interfaces/IRevealedSPNFT.sol";
 import {NFTStaking} from "./NFTStaking.sol";
 import {console2} from "forge-std/Test.sol";
@@ -98,7 +98,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     error NotOwner(address);
     error AlreadyRevealed();
     error InvalidRevealType();
-    error InvalidRSPNFTAddress(address);
+    error InvalidERC20(address);
     error RequestIdNotFound();
     error RequestIdAlreadyFulfilled();
     error TokenIdMustBeType1ForStake(uint256);
@@ -108,23 +108,23 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
 
     // ===================== CONSTRUCTOR ===========================
     constructor(
-        address rSPNFTAddress,
         string memory _n,
         string memory _s,
         AttributeOptions memory _aOptions,
         uint64 _subId,
         bytes32 _kHash,
-        address _coordinatorContract
-    ) VRFConsumerBaseV2(_coordinatorContract) ConfirmedOwner(msg.sender) NFTStaking(_n, _s) {
+        address _coordinatorContract,
+        address _erc20TokenAddress
+    ) VRFConsumerBaseV2(_coordinatorContract) ConfirmedOwner(msg.sender) NFTStaking(_n, _s, _erc20TokenAddress) {
         // check if contract
         uint256 size;
         assembly {
-            size := extcodesize(rSPNFTAddress)
-        }
-        if (size == 0) {
-            revert InvalidRSPNFTAddress(rSPNFTAddress);
+            size := extcodesize(_erc20TokenAddress)
         }
 
+        if (size == 0) {
+            revert InvalidERC20(_erc20TokenAddress);
+        }
         if (_isStringEmpty(_n) || _isStringEmpty(_s)) {
             revert EmptyNameOrSymbol();
         }
@@ -142,7 +142,9 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
 
         _attributeOptions = _aOptions;
 
-        revealedSPNFT = IRevealedSPNFT(rSPNFTAddress);
+        // deploy Revealed SP NFT contract
+        RevealedSPNFT rSPNFT = new RevealedSPNFT("Revealed SP NFT", "RSPNFT", _erc20TokenAddress);
+        revealedSPNFT = IRevealedSPNFT(address(rSPNFT));
 
         // for chainlink VRF
         _sSubscriptionId = _subId;
@@ -444,8 +446,6 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     function unstake(uint256 _tokenId) external nonReentrant {
         _unstake(_tokenId);
     }
-
-    // TODO: override all external setters: burn, approve, transfer, transferFrom functions ensuring the tokens are not transferable or approvable
 
     // ===================== UTILITY ===========================
 

@@ -10,13 +10,15 @@ contract SPNFTScript is Script {
 
     function run() public {
         vm.startBroadcast();
-        // 1. deploy Revealed SPNFT
+        // 1. deploy ERC20
+        // 2. deploy SPNFT
+        //   - linked ERC20 (into NFTStaking) to SPNFT
+        //   - created RSPNFT contract
+        //     - linked ERC20 (into NFTStaking) to RSPNFT
 
-        // 2. deploy SPNFT with Revealed SPNFT contract & chainlink details
-
-        // 3. transfer ownership of `RevealedSPNFT` to `SPNFT` for minting
-
-        // 4. deploy staking contract with both the contracts (as they have revealed types 1 & 2)
+        // NOTE: There can be 1 common function for transferring tokens at once.
+        // 3. transfer 1 M tokens to SPNFT contract
+        // 4. transfer 1 M tokens to RSPNFT contract
 
         vm.stopBroadcast();
     }

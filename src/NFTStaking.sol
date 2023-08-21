@@ -3,11 +3,17 @@ pragma solidity 0.8.18;
 
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
+import {IERC20} from "forge-std/interfaces/IERC20.sol";
+import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {console2} from "forge-std/Test.sol";
 
-contract NFTStaking is ERC721, ERC20 {
+abstract contract NFTStaking is ERC721 {
+    using SafeTransferLib for ERC20;
+
     uint8 public constant APY = 5;
     uint256 public constant PURCHASE_PRICE = 5e18; // 5 ETH or ERC20
+
+    ERC20 public erc20Token;
 
     struct Stake {
         bool isStaked;
@@ -23,7 +29,9 @@ contract NFTStaking is ERC721, ERC20 {
     error NotStaked();
     error AlreadyStaked();
 
-    constructor(string memory _n, string memory _s) ERC721(_n, _s) ERC20("SP Token", "SP", 18) {}
+    constructor(string memory _n, string memory _s, address _erc20TokenAddress) ERC721(_n, _s) {
+        erc20Token = ERC20(_erc20TokenAddress);
+    }
 
     // ===================== Getters ===========================
 
@@ -72,7 +80,7 @@ contract NFTStaking is ERC721, ERC20 {
         delete stakedTokenIds[_tokenId];
 
         // mint the accrued interest
-        ERC20._mint(msg.sender, accruedInterest);
+        erc20Token.safeTransfer(msg.sender, accruedInterest);
 
         emit Unstake(msg.sender, _tokenId);
     }

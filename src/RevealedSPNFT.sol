@@ -45,7 +45,10 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
 
     // ===================== CONSTRUCTOR ===========================
 
-    constructor(string memory _n, string memory _s) NFTStaking(_n, _s) Owned(msg.sender) {}
+    constructor(string memory _n, string memory _s, address _erc20TokenAddress)
+        NFTStaking(_n, _s, _erc20TokenAddress)
+        Owned(msg.sender)
+    {}
 
     // ===================== Getters ===========================
     function tokenURI(uint256 id) public view virtual override returns (string memory) {
