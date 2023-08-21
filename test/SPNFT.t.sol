@@ -183,11 +183,28 @@ contract SPNFTTest is Test {
 
     // ===================== Getters ===========================
 
-    /// TODO: get token URI
-    function testGetTokenURI() public {}
+    // get token URI
+    function testGetTokenURI() public {
+        // mint successfully
+        spNFT.mint{value: 6e18}(ALICE, bytes32("nft 1"), bytes32("good nft"));
+
+        uint256 tokenIdMinted = spNFT.tokenIds();
+        string memory tokenUri = spNFT.tokenURI(tokenIdMinted);
+        assertEq(
+            tokenUri,
+            "data:application/json;base64,eyJuYW1lIjogIlNQMDAxIiwiZGVzY3JpcHRpb24iOiJTdG9yeSBQcm90b2NvbCBNeXN0ZXJ5IEJveCBORlQiLCJpbWFnZSI6ICI8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9IiNGNDgwMjQiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiPjxwb2x5Z29uIHBvaW50cz0iMyAxNiAzIDggMTIgMTQgMjEgOCAyMSAxNiAxMiAyMiAzIDE2IiBzdHJva2Utd2lkdGg9IjAiIG9wYWNpdHk9IjAuMSIgZmlsbD0iIzA1OWNmNyI+PC9wb2x5Z29uPjxwb2x5Z29uIHBvaW50cz0iMjEgOCAyMSAxNiAxMiAyMiAzIDE2IDMgOCAxMiAyIDIxIDgiPjwvcG9seWdvbj48cG9seWxpbmUgcG9pbnRzPSIzIDggMTIgMTQgMTIgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PC9wb2x5bGluZT48bGluZSB4MT0iMjEiIHkxPSI4IiB4Mj0iMTIiIHkyPSIxNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48L2xpbmU+PC9zdmc+IiwiYXR0cmlidXRlcyI6IFt7InRyYWl0X3R5cGUiOiAiU2hhcGUiLCJ2YWx1ZSI6ICJDdWJlIn0seyJ0cmFpdF90eXBlIjogIkJvcmRlcnMiLCJ2YWx1ZSI6ICJCbGFjayJ9LHsidHJhaXRfdHlwZSI6ICJGaWxsZWQiLCJ2YWx1ZSI6ICJPcmFuZ2UifV19"
+        );
+    }
+
+    function testRevertGetTokenUriOfNonMinted() public {
+        vm.expectRevert("NOT_MINTED");
+        spNFT.tokenURI(0);
+    }
 
     function testGetTokenIDsMinted() public {
-        assertEq(spNFT.tokenIds(), 0);
+        // mint successfully
+        spNFT.mint{value: 6e18}(ALICE, bytes32("nft 1"), bytes32("good nft"));
+        assertEq(spNFT.tokenIds(), 1);
     }
 
     /// get total deposited ETH

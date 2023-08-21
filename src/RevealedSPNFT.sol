@@ -51,7 +51,7 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
     {}
 
     // ===================== Getters ===========================
-    function tokenURI(uint256 id) public view virtual override returns (string memory) {
+    function tokenURI(uint256 id) public view override returns (string memory) {
         ownerOf(id);
 
         Metadata memory mdata = _metadata[id];

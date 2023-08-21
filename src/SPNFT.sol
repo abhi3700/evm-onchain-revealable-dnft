@@ -165,7 +165,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     // function getName()
 
     /// @dev tokenURI returns the metadata
-    function tokenURI(uint256 id) public view virtual override returns (string memory) {
+    function tokenURI(uint256 id) public view override returns (string memory) {
         // token exists
         ownerOf(id);
 
