@@ -1,4 +1,4 @@
-## SC Solidity Foundry Boilerplate
+## Story Protocol Coding Challenge
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
@@ -55,8 +55,6 @@ $ forge fmt
 $ forge build --sizes
 ```
 
-> also need to add `--via-ir` flag to `forge build` command, if `stack too deep`.
-
 ### Gas Snapshots
 
 ```sh
@@ -72,7 +70,7 @@ $ anvil
 ### Deploy
 
 ```sh
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+$ forge script script/SPNFT.s.sol:SPNFTScript --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
 ```
 
 ---
@@ -80,7 +78,7 @@ $ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --pri
 Deploy to Anvil:
 
 ```sh
-$ forge script script/Counter.s.sol:CounterScript --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast
+$ forge script script/SPNFT.s.sol:SPNFTScript --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast
 ```
 
 For this script to work, you need to have a `MNEMONIC` environment variable set to a valid
@@ -91,13 +89,13 @@ For instructions on how to deploy to a testnet or mainnet, check out the
 
 ### Deploy & Verify
 
-Deploy to Goerli and verify on Etherscan:
+Deploy to Sepolia and verify on Etherscan:
 
 Set the `.env` as per the [`.env.example`](./.env.example) file.
 
 ```sh
 $ source .env
-$ forge script script/Counter.s.sol:CounterScript --rpc-url $GOERLI_RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast --verify -vvvvv
+$ forge script script/SPNFT.s.sol:SPNFTScript --fork-url $SEPOLIA_RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast --verify
 ```
 
 > With logs enabled using `-vvvvv`, you can see the transaction hash and the etherscan link.
@@ -105,7 +103,8 @@ $ forge script script/Counter.s.sol:CounterScript --rpc-url $GOERLI_RPC_URL --pr
 ### Flatten
 
 ```sh
-$ forge flatten src/Counter.sol -o flatten/src/CounterFlattened.sol
+$ forge flatten src/SPNFT.sol -o flatten/src/SPNFTFlattened.sol
+$ forge flatten src/RevealedSPNFT.sol -o flatten/src/RevealedSPNFT.sol
 ```
 
 ### Cast
