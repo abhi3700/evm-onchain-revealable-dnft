@@ -31,13 +31,13 @@ contract SPNFTSepoliaTest is Test {
     address public constant ME = 0x0370D871f1D4B256E753120221F3Be87A40bd246;
 
     // Deploy contracts on Sepolia network
-    address public constant SP_TOKEN_ADDRESS = 0x199e8a373431bb894a4108BC5749A682Ee6D76Ab;
-    address public constant SP_NFT_ADDRESS = 0x8B2B82cb1Ae16F6b9Bd825078c0c31D3BeB8c45A;
-    address public constant RSP_NFT_ADDRESS = 0xF63A2898AbfB69f8A35E381793856E0e528DCFdF;
+    address public constant SP_TOKEN_ADDRESS = 0xdeD7aEddaD1480182cc70b597A83eFa9f8d78Fc4;
+    address public constant SP_NFT_ADDRESS = 0xb398f97ed32899D1647F6f379663dAe0517625dE;
+    address public constant RSP_NFT_ADDRESS = 0xcAd6E16cfDE90B092aE6d9bfc0c95508e656F561;
 
     // ===================== EVENT ===========================
     event Minted(address indexed mintedBy, address indexed mintedTo, uint256 indexed tokenId);
-    event Burned(address indexed BurnedBy, uint256 indexed tokenId);
+    event Burned(address indexed burnedBy, uint256 indexed tokenId);
     event RequestSent(uint256 indexed requestId, uint32 numWords);
     event RequestFulfilled(uint256 indexed requestId, uint256[] randomWords);
     event ETHRefunded(address indexed mintedBy, uint256 ethAmount);

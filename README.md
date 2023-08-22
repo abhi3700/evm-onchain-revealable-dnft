@@ -1,17 +1,16 @@
-## Story Protocol Coding Challenge
+# RevealStake dNFT Collection
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Buy revealable dynamic NFT collection with staking rewards.
 
-Foundry consists of:
+## [Documentation](./docs/src/SUMMARY.md)
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+Just run this command to open the book in your browser:
 
-## Documentation
+```sh
+$ mdbook serve
+```
 
-https://book.getfoundry.sh/
+> Currently, the mermaid diagrams are not supported in mdbook. So, in order to preview the diagrams either prefer this [VSCode extension](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid) or view in Github.
 
 ## Usage
 
@@ -61,13 +60,9 @@ $ forge build --sizes
 $ forge snapshot
 ```
 
-### Anvil
-
-```sh
-$ anvil
-```
-
 ### Deploy
+
+To any network:
 
 ```sh
 $ forge script script/SPNFT.s.sol:SPNFTScript --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
@@ -75,27 +70,24 @@ $ forge script script/SPNFT.s.sol:SPNFTScript --rpc-url <your_rpc_url> --private
 
 ---
 
-Deploy to Anvil:
+Deploy to Anvil (local network):
 
 ```sh
+# Run local network
+$ anvil
+# Deploy
 $ forge script script/SPNFT.s.sol:SPNFTScript --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast
 ```
 
-For this script to work, you need to have a `MNEMONIC` environment variable set to a valid
-[BIP39 mnemonic](https://iancoleman.io/bip39/).
+---
 
-For instructions on how to deploy to a testnet or mainnet, check out the
-[Solidity Scripting](https://book.getfoundry.sh/tutorials/solidity-scripting.html) tutorial.
-
-### Deploy & Verify
-
-Deploy to Sepolia and verify on Etherscan:
+Deploy to **Sepolia** and verify on Etherscan:
 
 Set the `.env` as per the [`.env.example`](./.env.example) file.
 
 ```sh
 $ source .env
-$ forge script script/SPNFT.s.sol:SPNFTScript --fork-url $SEPOLIA_RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast --verify
+$ forge script script/SPNFT.s.sol:SPNFTScript --rpc-url $SEPOLIA_RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast --verify
 ```
 
 > With logs enabled using `-vvvvv`, you can see the transaction hash and the etherscan link.
@@ -107,16 +99,10 @@ $ forge flatten src/SPNFT.sol -o flatten/src/SPNFTFlattened.sol
 $ forge flatten src/RevealedSPNFT.sol -o flatten/src/RevealedSPNFT.sol
 ```
 
-### Cast
+### Bindings
+
+Generate bindings for Rust EVM client SDK:
 
 ```sh
-$ cast <subcommand>
-```
-
-### Help
-
-```sh
-$ forge --help
-$ anvil --help
-$ cast --help
+$ forge bind
 ```

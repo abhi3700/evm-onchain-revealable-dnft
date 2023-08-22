@@ -18,9 +18,14 @@ interface ISPNFT is IERC721Metadata, INFTStaking {
     function totalDepositedETH() external view returns (uint256);
     function tokenIds() external view returns (uint256);
     function owner() external view returns (address);
+    function paused() external view returns (bool);
     function mint(address to, bytes32 _name, bytes32 _description) external payable;
     function burn(uint256 id) external;
     function revealToken(uint8 _revealType, uint256 id) external;
     function stake(uint256 _tokenId) external;
     function unstake(uint256 _tokenId) external;
+    function pause() external;
+    function unpause() external;
+    function pauseRevealedSPNFT() external;
+    function unpauseRevealedSPNFT() external;
 }

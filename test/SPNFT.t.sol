@@ -20,10 +20,12 @@ contract SPNFTTest is Test {
 
     // ===================== EVENT ===========================
     event Minted(address indexed mintedBy, address indexed mintedTo, uint256 indexed tokenId);
-    event Burned(address indexed BurnedBy, uint256 indexed tokenId);
+    event Burned(address indexed burnedBy, uint256 indexed tokenId);
     event RequestSent(uint256 indexed requestId, uint32 numWords);
     event RequestFulfilled(uint256 indexed requestId, uint256[] randomWords);
     event ETHRefunded(address indexed mintedBy, uint256 ethAmount);
+    event Paused(address account);
+    event Unpaused(address account);
 
     // ===================== CONSTRUCTOR ===========================
     function setUp() public {
@@ -250,7 +252,7 @@ contract SPNFTTest is Test {
     /// Non-Admin (fuzzed with) can't mint to Anyone (itself/others) by paying in ETH
     function testRevertNonAdminMintToAnyonePayingETH(address to) public {
         vm.assume(to != ZERO_ADDRESS);
-        vm.expectRevert("Only callable by owner");
+        vm.expectRevert("UNAUTHORIZED");
         hoax(to, 6e18);
         spNFT.mint{value: 6e18}(to, bytes32("nft 1"), bytes32("good nft"));
     }
@@ -307,4 +309,94 @@ contract SPNFTTest is Test {
 
     /// TODO: Token owner can't burn if token id is staked
     function testBurnRevertsAfterStaked() public {}
+
+    // -----Pausable----
+
+    /// owner pause when not paused
+    function testPauseWhenNotPaused() public {
+        vm.expectEmit(false, false, false, true);
+        emit Paused(address(this));
+        spNFT.pause();
+    }
+
+    /// owner unpause when paused
+    function testUnPauseWhenPaused() public {
+        vm.expectEmit(false, false, false, true);
+        emit Paused(address(this));
+        spNFT.pause();
+
+        vm.expectEmit(false, false, false, true);
+        emit Unpaused(address(this));
+        spNFT.unpause();
+    }
+
+    /// owner fails to pause when already paused
+    function testRevertPauseWhenAlreadyPaused() public {
+        vm.expectEmit(false, false, false, true);
+        emit Paused(address(this));
+        spNFT.pause();
+
+        vm.expectRevert("Pausable: paused");
+        spNFT.pause();
+    }
+
+    /// owner fails to unpause when not paused
+    function testRevertUnPauseWhenAlreadyNotPaused() public {
+        vm.expectRevert("Pausable: not paused");
+        spNFT.unpause();
+    }
+
+    /// Non-Admin fails to pause
+    function testRevertWhenNonAdminPause(address pauseBy) public {
+        vm.assume(pauseBy != address(this));
+        vm.expectRevert("UNAUTHORIZED");
+        vm.prank(pauseBy);
+        spNFT.pause();
+    }
+
+    /// Non-Admin fails to unpause
+    function testRevertWhenNonAdminUnpause(address unpauseBy) public {
+        vm.assume(unpauseBy != address(this));
+        vm.expectRevert("UNAUTHORIZED");
+        vm.prank(unpauseBy);
+        spNFT.unpause();
+    }
+
+    /// Admin pause RevealedSPNFT contract
+    function testAdminPauseRevealedSPNFT() public {
+        vm.expectEmit(false, false, false, true);
+        emit Paused(address(spNFT));
+        spNFT.pauseRevealedSPNFT();
+    }
+
+    /// Admin unpause RevealedSPNFT contract
+    function testAdminUnpauseRevealedSPNFT() public {
+        vm.expectEmit(false, false, false, true);
+        emit Paused(address(spNFT));
+        spNFT.pauseRevealedSPNFT();
+
+        vm.expectEmit(false, false, false, true);
+        emit Unpaused(address(spNFT));
+        spNFT.unpauseRevealedSPNFT();
+    }
+
+    /// NonAdmin fails to pause when RevealedSPNFT contract is paused
+    function testRevertPauseByNonAdmin(address pauseBy) public {
+        vm.assume(pauseBy != address(this));
+        vm.expectRevert("UNAUTHORIZED");
+        vm.prank(pauseBy);
+        spNFT.pauseRevealedSPNFT();
+    }
+
+    function testRevertUnpauseByNonAdmin(address unpauseBy) public {
+        vm.assume(unpauseBy != address(this));
+
+        vm.expectEmit(false, false, false, true);
+        emit Paused(address(spNFT));
+        spNFT.pauseRevealedSPNFT();
+
+        vm.expectRevert("UNAUTHORIZED");
+        vm.prank(unpauseBy);
+        spNFT.unpauseRevealedSPNFT();
+    }
 }

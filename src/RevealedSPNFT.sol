@@ -165,12 +165,12 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard, Pausable {
     }
 
     /// @notice Pause contract
-    function pause() external onlyOwner whenNotPaused {
+    function pause() external onlyOwner {
         _pause();
     }
 
     /// @notice Unpause contract
-    function unpause() external onlyOwner whenPaused {
+    function unpause() external onlyOwner {
         _unpause();
     }
 

@@ -13,9 +13,9 @@ Compiler run successful!
 Script ran successfully.
 
 == Logs ==
-  ERC20 token deployed at:  0x172A6cc82559ad433de768AEC313AFD26D1944d2
-  SPNFT contract deployed at:  0x16F5deC50B35544215Fd1d7670A0a3cEaBD5aF43
-  RSPNFT contract deployed at:  0x4d1260E2c32be7b66544b991530D3F74CDcEbc83
+  SPToken (ERC20) token deployed at:  0xdeD7aEddaD1480182cc70b597A83eFa9f8d78Fc4
+  SPNFT contract deployed at:  0xb398f97ed32899D1647F6f379663dAe0517625dE
+  RSPNFT contract deployed at:  0xcAd6E16cfDE90B092aE6d9bfc0c95508e656F561
   The SPNFT's balance:  10000000000000000000000
   The SPNFT's balance:  10000000000000000000000
 

@@ -8,4 +8,5 @@
 - [Gas report](./gas_report.md)
 - [Interaction with Contract using CLI](./interact_w_contract.md) coming soon
 - [More instructions in Repo's README](../../README.md)
+- [Troubleshooting](./troubleshooting.md)
 - [FAQs](./faqs.md)

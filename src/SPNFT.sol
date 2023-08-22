@@ -6,14 +6,15 @@ import {ReentrancyGuard} from "./dependencies/ReentrancyGuard.sol";
 import {LibBase64} from "./libs/LibBase64.sol";
 import {VRFCoordinatorV2Interface} from "./dependencies/VRFCoordinatorV2Interface.sol";
 import {VRFConsumerBaseV2} from "./dependencies/VRFConsumerBaseV2.sol";
-import {ConfirmedOwner} from "./dependencies/ConfirmedOwner.sol";
+// import {ConfirmedOwner} from "./dependencies/ConfirmedOwner.sol";
+import {Owned} from "./dependencies/Owned.sol";
 import {RevealedSPNFT} from "./RevealedSPNFT.sol";
 import {IRevealedSPNFT} from "./interfaces/IRevealedSPNFT.sol";
 import {NFTStaking} from "./dependencies/NFTStaking.sol";
 import {Pausable} from "./dependencies/Pausable.sol";
 // import {console2} from "forge-std/Test.sol";
 
-contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, Pausable {
+contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, Owned, Pausable {
     using LibString for uint256;
 
     // ===================== STORAGE ===========================
@@ -89,7 +90,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
 
     // ===================== EVENT ===========================
     event Minted(address indexed mintedBy, address indexed mintedTo, uint256 indexed tokenId);
-    event Burned(address indexed BurnedBy, uint256 indexed tokenId);
+    event Burned(address indexed burnedBy, uint256 indexed tokenId);
     event RequestSent(uint256 indexed requestId, uint32 numWords);
     event RequestFulfilled(uint256 indexed requestId, uint256[] randomWords);
     event ETHRefunded(address indexed mintedBy, uint256 ethAmount);
@@ -125,7 +126,8 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         address _erc20TokenAddress
     )
         VRFConsumerBaseV2(_coordinatorContract)
-        ConfirmedOwner(msg.sender)
+        // ConfirmedOwner(msg.sender)
+        Owned(msg.sender)
         NFTStaking(_n, _s, _erc20TokenAddress)
         Pausable()
     {
@@ -351,6 +353,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         return requestId;
     }
 
+    /// Fulfill random words
     function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords)
         internal
         override
@@ -435,22 +438,22 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     }
 
     /// @notice Pause contract
-    function pause() external onlyOwner whenNotPaused {
+    function pause() external onlyOwner {
         _pause();
     }
 
     /// @notice Unpause contract
-    function unpause() external onlyOwner whenPaused {
+    function unpause() external onlyOwner {
         _unpause();
     }
 
     /// @notice Pause revealed SPNFT contract
-    function pauseRevealedSPNFT() external onlyOwner whenNotPaused {
+    function pauseRevealedSPNFT() external onlyOwner {
         revealedSPNFT.pause();
     }
 
     /// @notice Unpause revealed SPNFT contract
-    function unpauseRevealedSPNFT() external onlyOwner whenPaused {
+    function unpauseRevealedSPNFT() external onlyOwner {
         revealedSPNFT.unpause();
     }
 
