@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Markmap</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+}
+#mindmap {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.8.0/styles/default.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/markmap-toolbar@0.15.3/dist/style.css">
+</head>
+<body>
+<svg id="mindmap"></svg>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script><script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.3/dist/browser/index.js"></script><script src="https://cdn.jsdelivr.net/npm/markmap-toolbar@0.15.3/dist/index.js"></script><script>(r => {
+                setTimeout(r);
+              })(() => {
+  const {
+    markmap,
+    mm
+  } = window;
+  const {
+    el
+  } = markmap.Toolbar.create(mm);
+  el.setAttribute('style', 'position:absolute;bottom:20px;right:20px');
+  document.body.append(el);
+})</script><script>((getMarkmap, getOptions, root, jsonOptions) => {
+          const markmap = getMarkmap();
+          window.mm = markmap.Markmap.create('svg#mindmap', (getOptions || markmap.deriveOptions)(jsonOptions), root);
+        })(() => window.markmap,null,{"type":"heading","depth":0,"payload":{"lines":[0,1]},"content":"RevealStake dNFT Collection","children":[{"type":"heading","depth":1,"payload":{"lines":[4,5]},"content":"<a href=\"./docs/src/SUMMARY.md\">Documentation</a>","children":[{"type":"fence","depth":2,"content":"<pre><code class=\"language-sh\">$ mdbook serve\n</code></pre>\n","children":[],"payload":{"lines":[8,11]}},{"type":"blockquote","depth":2,"payload":{"lines":[12,13]},"content":"","children":[{"type":"paragraph","depth":3,"payload":{"lines":[12,13]},"content":"Currently, the mermaid diagrams are not supported in mdbook. So, in order to preview the diagrams either prefer this <a href=\"https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid\">VSCode extension</a> or view in Github.","children":[]}]}]},{"type":"heading","depth":1,"payload":{"lines":[14,15]},"content":"Usage","children":[{"type":"heading","depth":2,"payload":{"lines":[16,17]},"content":"Build","children":[{"type":"fence","depth":3,"content":"<pre><code class=\"language-sh\">$ forge build\n</code></pre>\n","children":[],"payload":{"lines":[18,21]}}]},{"type":"heading","depth":2,"payload":{"lines":[22,23]},"content":"Test","children":[{"type":"fence","depth":3,"content":"<pre><code class=\"language-sh\">$ forge <span class=\"hljs-built_in\">test</span>\n</code></pre>\n","children":[],"payload":{"lines":[24,27]}},{"type":"fence","depth":3,"content":"<pre><code class=\"language-sh\">$ forge <span class=\"hljs-built_in\">test</span> --gas-report\n</code></pre>\n","children":[],"payload":{"lines":[32,35]}},{"type":"heading","depth":3,"payload":{"lines":[36,37]},"content":"Fork testing","children":[{"type":"fence","depth":4,"content":"<pre><code class=\"language-sh\">$ forge <span class=\"hljs-built_in\">test</span> --mp <span class=\"hljs-built_in\">test</span>/sepolia/SPNFTTest.t.sol --fork-url <span class=\"hljs-variable\">$SEPOLIA_RPC_URL</span>\n</code></pre>\n","children":[],"payload":{"lines":[40,43]}}]}]},{"type":"heading","depth":2,"payload":{"lines":[44,45]},"content":"Format","children":[{"type":"fence","depth":3,"content":"<pre><code class=\"language-sh\">$ forge <span class=\"hljs-built_in\">fmt</span>\n</code></pre>\n","children":[],"payload":{"lines":[46,49]}}]},{"type":"heading","depth":2,"payload":{"lines":[50,51]},"content":"Contract size","children":[{"type":"fence","depth":3,"content":"<pre><code class=\"language-sh\">$ forge build --sizes\n</code></pre>\n","children":[],"payload":{"lines":[52,55]}}]},{"type":"heading","depth":2,"payload":{"lines":[56,57]},"content":"Gas Snapshots","children":[{"type":"fence","depth":3,"content":"<pre><code class=\"language-sh\">$ forge snapshot\n</code></pre>\n","children":[],"payload":{"lines":[58,61]}}]},{"type":"heading","depth":2,"payload":{"lines":[62,63]},"content":"Deploy","children":[{"type":"fence","depth":3,"content":"<pre><code class=\"language-sh\">$ forge script script/SPNFT.s.sol:SPNFTScript --rpc-url &lt;your_rpc_url&gt; --private-key &lt;your_private_key&gt; --broadcast\n</code></pre>\n","children":[],"payload":{"lines":[66,69]}},{"type":"fence","depth":3,"content":"<pre><code class=\"language-sh\"><span class=\"hljs-comment\"># Run local network</span>\n$ anvil\n<span class=\"hljs-comment\"># Deploy</span>\n$ forge script script/SPNFT.s.sol:SPNFTScript --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast\n</code></pre>\n","children":[],"payload":{"lines":[74,80]}},{"type":"fence","depth":3,"content":"<pre><code class=\"language-sh\">$ <span class=\"hljs-built_in\">source</span> .<span class=\"hljs-built_in\">env</span>\n$ forge script script/SPNFT.s.sol:SPNFTScript --rpc-url <span class=\"hljs-variable\">$SEPOLIA_RPC_URL</span> --private-key <span class=\"hljs-variable\">$DEPLOYER_PRIVATE_KEY</span> --broadcast --verify\n</code></pre>\n","children":[],"payload":{"lines":[87,91]}},{"type":"blockquote","depth":3,"payload":{"lines":[92,93]},"content":"","children":[{"type":"paragraph","depth":4,"payload":{"lines":[92,93]},"content":"With logs enabled using <code>-vvvvv</code>, you can see the transaction hash and the etherscan link.","children":[]}]}]},{"type":"heading","depth":2,"payload":{"lines":[94,95]},"content":"Flatten","children":[{"type":"fence","depth":3,"content":"<pre><code class=\"language-sh\">$ forge flatten src/SPNFT.sol -o flatten/src/SPNFTFlattened.sol\n$ forge flatten src/RevealedSPNFT.sol -o flatten/src/RevealedSPNFT.sol\n</code></pre>\n","children":[],"payload":{"lines":[96,100]}}]},{"type":"heading","depth":2,"payload":{"lines":[101,102]},"content":"Bindings","children":[{"type":"fence","depth":3,"content":"<pre><code class=\"language-sh\">$ forge <span class=\"hljs-built_in\">bind</span>\n</code></pre>\n","children":[],"payload":{"lines":[105,108]}}]}]}]},{})</script>
+</body>
+</html>
