@@ -5,17 +5,15 @@ Just run this command to deploy the contracts to the network.
 > Additionally, operator has to also add consumer to VRF coordinator contract.
 
 ```sh
-❯ forge script script/SPNFT.s.sol:SPNFTScript --fork-url $SEPOLIA_RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast --verify
+❯ forge script script/SPNFT.s.sol:SPNFTScript --rpc-url $SEPOLIA_RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast --verify
 [⠢] Compiling...
-[⠑] Compiling 21 files with 0.8.18
-[⠃] Solc 0.8.18 finished in 49.22s
-Compiler run successful!
+No files changed, compilation skipped
 Script ran successfully.
 
 == Logs ==
-  SPToken (ERC20) token deployed at:  0xdeD7aEddaD1480182cc70b597A83eFa9f8d78Fc4
-  SPNFT contract deployed at:  0xb398f97ed32899D1647F6f379663dAe0517625dE
-  RSPNFT contract deployed at:  0xcAd6E16cfDE90B092aE6d9bfc0c95508e656F561
+  SPToken (ERC20) token deployed at:  0x54b9BBC05B8C17605A8F4c2103c2110D40fC4633
+  SPNFT contract deployed at:  0x656f451B8db56D8372175E954A500fA1ea9112f5
+  RSPNFT contract deployed at:  0xfB9c87f79Be4dca6Fa81F12fDD1c711eef33884D
   The SPNFT's balance:  10000000000000000000000
   The SPNFT's balance:  10000000000000000000000
 
@@ -25,11 +23,11 @@ Script ran successfully.
 
 Chain 11155111
 
-Estimated gas price: 10.22541403 gwei
+Estimated gas price: 13.261048226 gwei
 
-Estimated total gas used for script: 10748250
+Estimated total gas used for script: 10897817
 
-Estimated amount required: 0.1099053063479475 ETH
+Estimated amount required: 0.144516476795122642 ETH
 
 ==========================
 
@@ -37,38 +35,38 @@ Estimated amount required: 0.1099053063479475 ETH
 Finding wallets for all the necessary addresses...
 ##
 Sending transactions [0 - 3].
-⠚ [00:00:02] [#######################################################################################################] 4/4 txes (0.0s)
+⠚ [00:00:00] [#######################################################################################################################] 4/4 txes (0.0s)
 Transactions saved to: /Users/abhi3700/F/coding/github_repos/sp_coding_challenge/broadcast/SPNFT.s.sol/11155111/run-latest.json
 
 Sensitive values saved to: /Users/abhi3700/F/coding/github_repos/sp_coding_challenge/cache/SPNFT.s.sol/11155111/run-latest.json
 
 ##
 Waiting for receipts.
-⠒ [00:00:14] [###################################################################################################] 4/4 receipts (0.0s)
+⠒ [00:00:07] [###################################################################################################################] 4/4 receipts (0.0s)
 ##### sepolia
-✅  [Success]Hash: 0xf02a85e4d1a55d0e7d7eb77e56f962ccdc25c46e1acc0e90e0429ef0ca7901d8
-Contract Address: 0x172A6cc82559ad433de768AEC313AFD26D1944d2
-Block: 4136795
-Paid: 0.00749310441222431 ETH (881854 gas * 8.496989765 gwei)
-
-
-##### sepolia
-✅  [Success]Hash: 0x0c1498a8f7b15491efeca741307ab90848d5f6ef5829df0a4096ddad5a0be2b2
-Contract Address: 0x16F5deC50B35544215Fd1d7670A0a3cEaBD5aF43
-Block: 4136795
-Paid: 0.061807298981374595 ETH (7274023 gas * 8.496989765 gwei)
+✅  [Success]Hash: 0x0dee1b147f01dca12ceb5a22d3ee27b44802fdaedcc4adbac944d09f970fe317
+Contract Address: 0x54b9BBC05B8C17605A8F4c2103c2110D40fC4633
+Block: 4138592
+Paid: 0.008369102353151122 ETH (881854 gas * 9.490349143 gwei)
 
 
 ##### sepolia
-✅  [Success]Hash: 0x6f90b0c2e41c3a66045e5cb2035dac8fd4b884c4068304e5c3b98a41c198f524
-Block: 4136795
-Paid: 0.000435870083975205 ETH (51297 gas * 8.496989765 gwei)
+✅  [Success]Hash: 0xdc57fa98356aaab0b040c314a3e84b95625131dcb5800f23b2acd68794a1d771
+Contract Address: 0x656f451B8db56D8372175E954A500fA1ea9112f5
+Block: 4138592
+Paid: 0.070125366620920732 ETH (7389124 gas * 9.490349143 gwei)
 
 
 ##### sepolia
-✅  [Success]Hash: 0x1e43bda1c63f8c7b2e746f6afd6d81c6e0642a96f28954632f6e2ed0bed71321
-Block: 4136795
-Paid: 0.000435870083975205 ETH (51297 gas * 8.496989765 gwei)
+✅  [Success]Hash: 0x4d83ae6b4da78cdb0e7a170d1333d86bc0735bd92069b2eedb1e72a1b0b9be5a
+Block: 4138592
+Paid: 0.000486826439988471 ETH (51297 gas * 9.490349143 gwei)
+
+
+##### sepolia
+✅  [Success]Hash: 0x40d22afd74993c0ab0e62cca387d0841679e9f15851bc73720e7fd378be3b696
+Block: 4138592
+Paid: 0.000486826439988471 ETH (51297 gas * 9.490349143 gwei)
 
 
 Transactions saved to: /Users/abhi3700/F/coding/github_repos/sp_coding_challenge/broadcast/SPNFT.s.sol/11155111/run-latest.json
@@ -80,25 +78,21 @@ Sensitive values saved to: /Users/abhi3700/F/coding/github_repos/sp_coding_chall
 ==========================
 
 ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
-Total Paid: 0.070172143561549315 ETH (8258471 gas * avg 8.496989765 gwei)
+Total Paid: 0.079468121854048796 ETH (8373572 gas * avg 9.490349143 gwei)
 ##
 Start verification for (3) contracts
-Start verifying contract `0x172a6cc82559ad433de768aec313afd26d1944d2` deployed on sepolia
+Start verifying contract `0x54b9bbc05b8c17605a8f4c2103c2110d40fc4633` deployed on sepolia
 
-Submitting verification for [src/SPToken.sol:SPToken] "0x172A6cc82559ad433de768AEC313AFD26D1944d2".
+Submitting verification for [src/SPToken.sol:SPToken] "0x54b9BBC05B8C17605A8F4c2103c2110D40fC4633".
 
-Submitting verification for [src/SPToken.sol:SPToken] "0x172A6cc82559ad433de768AEC313AFD26D1944d2".
+Submitting verification for [src/SPToken.sol:SPToken] "0x54b9BBC05B8C17605A8F4c2103c2110D40fC4633".
 
-Submitting verification for [src/SPToken.sol:SPToken] "0x172A6cc82559ad433de768AEC313AFD26D1944d2".
-
-Submitting verification for [src/SPToken.sol:SPToken] "0x172A6cc82559ad433de768AEC313AFD26D1944d2".
-
-Submitting verification for [src/SPToken.sol:SPToken] "0x172A6cc82559ad433de768AEC313AFD26D1944d2".
+Submitting verification for [src/SPToken.sol:SPToken] "0x54b9BBC05B8C17605A8F4c2103c2110D40fC4633".
 Submitted contract for verification:
         Response: `OK`
-        GUID: `7zj3lsne8nwf6qn97syhupbgsieg3pvfzkkimxugnhxdvrwtxy`
+        GUID: `6ttdw2puajlr2a4kvvaxusnq8lgyv3ex4yeb6fwnbvcntcjxit`
         URL:
-        https://sepolia.etherscan.io/address/0x172a6cc82559ad433de768aec313afd26d1944d2
+        https://sepolia.etherscan.io/address/0x54b9bbc05b8c17605a8f4c2103c2110d40fc4633
 Contract verification status:
 Response: `NOTOK`
 Details: `Pending in queue`
@@ -106,14 +100,17 @@ Contract verification status:
 Response: `OK`
 Details: `Pass - Verified`
 Contract successfully verified
-Start verifying contract `0x16f5dec50b35544215fd1d7670a0a3ceabd5af43` deployed on sepolia
+Start verifying contract `0x656f451b8db56d8372175e954a500fa1ea9112f5` deployed on sepolia
 
-Submitting verification for [src/SPNFT.sol:SPNFT] "0x16F5deC50B35544215Fd1d7670A0a3cEaBD5aF43".
+Submitting verification for [src/SPNFT.sol:SPNFT] "0x656f451B8db56D8372175E954A500fA1ea9112f5".
 Submitted contract for verification:
         Response: `OK`
-        GUID: `8rckciqubtmxbjsgfkf6n9yiudsxm2pcivgvuf82ijmtugvcce`
+        GUID: `ntruzd5d5akrz86nnwwtefrnwqg1nw2aptfky9yr6ubk2jxuie`
         URL:
-        https://sepolia.etherscan.io/address/0x16f5dec50b35544215fd1d7670a0a3ceabd5af43
+        https://sepolia.etherscan.io/address/0x656f451b8db56d8372175e954a500fa1ea9112f5
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
 Contract verification status:
 Response: `NOTOK`
 Details: `Pending in queue`
@@ -121,14 +118,14 @@ Contract verification status:
 Response: `OK`
 Details: `Pass - Verified`
 Contract successfully verified
-Start verifying contract `0x4d1260e2c32be7b66544b991530d3f74cdcebc83` deployed on sepolia
+Start verifying contract `0xfb9c87f79be4dca6fa81f12fdd1c711eef33884d` deployed on sepolia
 
-Submitting verification for [src/RevealedSPNFT.sol:RevealedSPNFT] "0x4d1260E2c32be7b66544b991530D3F74CDcEbc83".
+Submitting verification for [src/RevealedSPNFT.sol:RevealedSPNFT] "0xfB9c87f79Be4dca6Fa81F12fDD1c711eef33884D".
 Submitted contract for verification:
         Response: `OK`
-        GUID: `3qzgskxb47bne4ibgsjzcmkwjmsuswr2hmas7vqvhdndvnlv11`
+        GUID: `pfbqp8ucyaw5f98b2xtkfexvnbe6mctmii7mzzeyhwbpu1dtcr`
         URL:
-        https://sepolia.etherscan.io/address/0x4d1260e2c32be7b66544b991530d3f74cdcebc83
+        https://sepolia.etherscan.io/address/0xfb9c87f79be4dca6fa81f12fdd1c711eef33884d
 Contract verification status:
 Response: `NOTOK`
 Details: `Pending in queue`

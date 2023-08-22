@@ -31,9 +31,9 @@ contract RSPNFTSepoliaTest is Test {
     address public constant ME = 0x0370D871f1D4B256E753120221F3Be87A40bd246;
 
     // Deploy contracts on Sepolia network
-    address public constant SP_TOKEN_ADDRESS = 0xdeD7aEddaD1480182cc70b597A83eFa9f8d78Fc4;
-    address public constant SP_NFT_ADDRESS = 0xb398f97ed32899D1647F6f379663dAe0517625dE;
-    address public constant RSP_NFT_ADDRESS = 0xcAd6E16cfDE90B092aE6d9bfc0c95508e656F561;
+    address public constant SP_TOKEN_ADDRESS = 0x54b9BBC05B8C17605A8F4c2103c2110D40fC4633;
+    address public constant SP_NFT_ADDRESS = 0x656f451B8db56D8372175E954A500fA1ea9112f5;
+    address public constant RSP_NFT_ADDRESS = 0xfB9c87f79Be4dca6Fa81F12fDD1c711eef33884D;
 
     // ===================== EVENT ===========================
     event Minted(address indexed mintedBy, address indexed mintedTo, uint256 indexed tokenId);
