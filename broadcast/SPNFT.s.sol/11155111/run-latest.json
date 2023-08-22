@@ -36,7 +36,7 @@
         "[#583322, #1e90ff, #eeb2d2, #4b0082]",
         "[#f5f3e7, #ffcc99, #fde0d9, #808000]",
         "[#d291bc, #ff0000, #ff7f50, #800020]",
-        "4562",
+        "vm.envUint("VRF_SUBSCRIPTION_ID")",
         "0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625",
         "0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c",
         "0x199e8a373431bb894a4108BC5749A682Ee6D76Ab"

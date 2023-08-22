@@ -30,9 +30,9 @@ contract SPNFTScript is Script {
             ["#583322","#1e90ff","#eeb2d2","#4b0082"],
             ["#f5f3e7","#ffcc99","#fde0d9","#808000"],
             ["#d291bc","#ff0000","#ff7f50","#800020"],
-            uint64(4562),
-            0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
-            0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
+            uint64(vm.envUint("VRF_SUBSCRIPTION_ID")),
+            vm.envAddress("COORDINATOR_ADDRESS"),
+            vm.envBytes32("KEY_HASH"),
             address(spToken)
         );
 
