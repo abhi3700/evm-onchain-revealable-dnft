@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import {IERC721Metadata} from "forge-std/interfaces/IERC721.sol";
+import {IERC721Metadata} from "./IERC721.sol";
+import {INFTStaking} from "./INFTStaking.sol";
 
-interface ISPNFT is IERC721Metadata {
+interface ISPNFT is IERC721Metadata, INFTStaking {
     // NFT metadata
     struct Metadata {
         uint8 revealType;
@@ -13,12 +14,6 @@ interface ISPNFT is IERC721Metadata {
         string[4] attributeValues;
     }
 
-    struct Stake {
-        bool isStaked;
-        uint32 stakedTime; // time from when the accrued interest calculation starts, reset the time (to now) when claimed
-    }
-
-    function stakedTokenIds(uint256 tokenId) external view returns (Stake memory);
     function metadata(uint256 tokenId) external view returns (Metadata memory);
     function totalDepositedETH() external view returns (uint256);
     function tokenIds() external view returns (uint256);

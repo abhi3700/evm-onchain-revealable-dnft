@@ -307,13 +307,4 @@ contract SPNFTTest is Test {
 
     /// TODO: Token owner can't burn if token id is staked
     function testBurnRevertsAfterStaked() public {}
-
-    // ------stake-------
-
-    /// User with tokens revealed as type 1 can only stake
-    function testStake() public {}
-
-    // ------unstake-------
-    /// User with staked token can only unstake & claim rewards simultaneously
-    function testUnstake() public {}
 }

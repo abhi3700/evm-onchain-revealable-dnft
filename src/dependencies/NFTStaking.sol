@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import {ERC721} from "solmate/tokens/ERC721.sol";
-import {ERC20} from "solmate/tokens/ERC20.sol";
-import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
-import {console2} from "forge-std/Test.sol";
+import {ERC721} from "./ERC721.sol";
+import {ERC20} from "./ERC20.sol";
+import {SafeTransferLib} from "../libs/SafeTransferLib.sol";
+// import {console2} from "forge-std/Test.sol";
 
 abstract contract NFTStaking is ERC721 {
     using SafeTransferLib for ERC20;

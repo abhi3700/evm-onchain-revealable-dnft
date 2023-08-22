@@ -1,6 +1,6 @@
----
-title: Assets
----
+## Assets
+
+Here, are the assets images and attributes options for tokens metadata inclusive of image (in SVG format).
 
 [**Box SVG**](https://www.svgviewer.dev/s/412127/box)
 

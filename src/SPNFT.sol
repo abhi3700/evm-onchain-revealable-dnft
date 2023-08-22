@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import {LibString} from "solmate/utils/LibString.sol";
-import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
+import {LibString} from "./libs/LibString.sol";
+import {ReentrancyGuard} from "./dependencies/ReentrancyGuard.sol";
 import {LibBase64} from "./libs/LibBase64.sol";
 import {VRFCoordinatorV2Interface} from "./dependencies/VRFCoordinatorV2Interface.sol";
 import {VRFConsumerBaseV2} from "./dependencies/VRFConsumerBaseV2.sol";
 import {ConfirmedOwner} from "./dependencies/ConfirmedOwner.sol";
 import {RevealedSPNFT} from "./RevealedSPNFT.sol";
 import {IRevealedSPNFT} from "./interfaces/IRevealedSPNFT.sol";
-import {NFTStaking} from "./NFTStaking.sol";
-import {console2} from "forge-std/Test.sol";
+import {NFTStaking} from "./dependencies/NFTStaking.sol";
+import {Pausable} from "./dependencies/Pausable.sol";
+// import {console2} from "forge-std/Test.sol";
 
-contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner {
+contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner, Pausable {
     using LibString for uint256;
 
     // ===================== STORAGE ===========================
@@ -122,7 +123,12 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         address _coordinatorContract,
         bytes32 _kHash,
         address _erc20TokenAddress
-    ) VRFConsumerBaseV2(_coordinatorContract) ConfirmedOwner(msg.sender) NFTStaking(_n, _s, _erc20TokenAddress) {
+    )
+        VRFConsumerBaseV2(_coordinatorContract)
+        ConfirmedOwner(msg.sender)
+        NFTStaking(_n, _s, _erc20TokenAddress)
+        Pausable()
+    {
         // check if contract
         uint256 size;
         assembly {
@@ -227,7 +233,13 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     /// @dev Only Owner can
     ///     - mint next available token id
     ///     - set name, description of the NFT
-    function mint(address to, bytes32 _name, bytes32 _description) external payable onlyOwner {
+    function mint(address to, bytes32 _name, bytes32 _description)
+        external
+        payable
+        whenNotPaused
+        onlyOwner
+        nonReentrant
+    {
         if (to == address(0)) {
             revert ZeroAddress();
         }
@@ -270,7 +282,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     }
 
     /// @dev NFT asset holder can burn any token
-    function burn(uint256 id) external {
+    function burn(uint256 id) external whenNotPaused {
         if (msg.sender != ownerOf(id)) {
             revert NotOwner(msg.sender);
         }
@@ -290,7 +302,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     ///     to the 2nd owner. Now, 2nd owner decides to reveal it with 1/2 type.
     /// @param _revealType reveal type to be set for unrevealed tokens.
     /// @param id token id
-    function revealToken(uint8 _revealType, uint256 id) external nonReentrant {
+    function revealToken(uint8 _revealType, uint256 id) external whenNotPaused nonReentrant {
         // token exists
         ownerOf(id);
 
@@ -339,7 +351,12 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         return requestId;
     }
 
-    function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) internal override nonReentrant {
+    function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords)
+        internal
+        override
+        whenNotPaused
+        nonReentrant
+    {
         RequestStatus memory requestStatus = sRequests[_requestId];
 
         // check if requestId exists
@@ -360,8 +377,6 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         string memory hair = traitsOptions.hair[_randomWords[1] % 4];
         string memory face = traitsOptions.hair[_randomWords[1] % 4];
         string memory mouth = traitsOptions.hair[_randomWords[1] % 4];
-
-        console2.log(eye, hair, face, mouth);
 
         // if reveal type = 1 or 2
         if (requestStatus.revealType == 1 || requestStatus.revealType == 2) {
@@ -400,7 +415,7 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     }
 
     /// @dev stake function
-    function stake(uint256 _tokenId) external nonReentrant {
+    function stake(uint256 _tokenId) external whenNotPaused nonReentrant {
         Metadata memory mdata = _metadata[tokenIds];
 
         // Stake only revealed tokens of type 1
@@ -415,8 +430,28 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
 
     /// @dev unstake & claim rewards token Id
     /// @param _tokenId token Id for which accrued interest rewards are to be claimed & then unstake
-    function unstake(uint256 _tokenId) external nonReentrant {
+    function unstake(uint256 _tokenId) external whenNotPaused nonReentrant {
         _unstake(_tokenId);
+    }
+
+    /// @notice Pause contract
+    function pause() external onlyOwner whenNotPaused {
+        _pause();
+    }
+
+    /// @notice Unpause contract
+    function unpause() external onlyOwner whenPaused {
+        _unpause();
+    }
+
+    /// @notice Pause revealed SPNFT contract
+    function pauseRevealedSPNFT() external onlyOwner whenNotPaused {
+        revealedSPNFT.pause();
+    }
+
+    /// @notice Unpause revealed SPNFT contract
+    function unpauseRevealedSPNFT() external onlyOwner whenPaused {
+        revealedSPNFT.unpause();
     }
 
     // ===================== UTILITY ===========================
@@ -480,10 +515,6 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
     function _getSvg(uint256 tokenId) private view returns (string memory svg) {
         Metadata memory mdata = _metadata[tokenId];
         uint8 _revealedType = mdata.revealType;
-
-        console2.log(
-            mdata.attributeValues[0], mdata.attributeValues[1], mdata.attributeValues[2], mdata.attributeValues[3]
-        );
 
         // revealed type is 0 i.e. not revealed yet
         if (_revealedType == 0) {

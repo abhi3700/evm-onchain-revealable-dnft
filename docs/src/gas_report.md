@@ -1,6 +1,4 @@
----
-title: Gas Report
----
+## Gas Report
 
 **`SPNFTTest` locally**:
 

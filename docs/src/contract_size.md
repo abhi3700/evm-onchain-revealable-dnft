@@ -1,22 +1,18 @@
----
-title: Contract Size
----
+## Contract Size
 
 ```sh
 ❯ forge build --sizes
-[⠢] Compiling...
-[⠆] Compiling 2 files with 0.8.18
-[⠰] Solc 0.8.18 finished in 20.83s
-Compiler run successful!
+[⠒] Compiling...
+No files changed, compilation skipped
 | Contract                   | Size (kB) | Margin (kB) |
 |----------------------------|-----------|-------------|
 | ConfirmedOwner             | 0.579     | 23.997      |
 | ConfirmedOwnerWithProposal | 0.579     | 23.997      |
 | LibBase64                  | 0.058     | 24.518      |
 | LibString                  | 0.058     | 24.518      |
-| RevealedSPNFT              | 11.945    | 12.631      |
-| SPNFT                      | 17.568    | 7.008       |
-| SPToken                    | 3.071     | 21.505      |
+| RevealedSPNFT              | 12.399    | 12.177      |
+| SPNFT                      | 18.121    | 6.455       |
+| SPToken                    | 3.187     | 21.389      |
 | SafeTransferLib            | 0.058     | 24.518      |
 | StdStyle                   | 0.058     | 24.518      |
 | console                    | 0.058     | 24.518      |

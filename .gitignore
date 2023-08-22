@@ -20,3 +20,7 @@ arch.drawio
 .DS_Store
 
 .todo
+
+# remix ide
+artifacts/
+compiler_config.json

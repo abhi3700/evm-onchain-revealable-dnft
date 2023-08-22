@@ -5,11 +5,17 @@ import {Script, console2} from "forge-std/Script.sol";
 import {RevealedSPNFT} from "../src/RevealedSPNFT.sol";
 import {SPNFT} from "../src/SPNFT.sol";
 import {SPToken} from "../src/SPToken.sol";
+// import {VRFCoordinatorV2Interface} from "../src/dependencies/VRFCoordinatorV2Interface.sol";
 
 contract SPNFTScript is Script {
     SPToken public spToken;
     RevealedSPNFT public rSPNFT;
     SPNFT public spNFT;
+
+    // chainlink vrf
+    // uint64 public vrfSubscriptionId = uint64(vm.envUint("VRF_SUBSCRIPTION_ID"));
+    // address public coordinatorAddress = vm.envAddress("COORDINATOR_ADDRESS");
+    // bytes32 public keyHash = vm.envBytes32("0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c");
 
     function setUp() public {}
 
@@ -36,7 +42,7 @@ contract SPNFTScript is Script {
             address(spToken)
         );
 
-        console2.log("ERC20 token deployed at: ", address(spToken));
+        console2.log("SPToken (ERC20) token deployed at: ", address(spToken));
         console2.log("SPNFT contract deployed at: ", address(spNFT));
         address rSPNFTAddress = address(spNFT.revealedSPNFT());
         console2.log("RSPNFT contract deployed at: ", rSPNFTAddress);
@@ -48,6 +54,9 @@ contract SPNFTScript is Script {
         // 4. transfer 10k tokens to RSPNFT contract
         spToken.transfer(rSPNFTAddress, 1e22);
         console2.log("The SPNFT's balance: ", spToken.balanceOf(rSPNFTAddress));
+
+        // 5. add SPNFT as consumer to subscription id of chainlink on preferred network
+        // VRFCoordinatorV2Interface(coordinatorAddress).addConsumer(vrfSubscriptionId, address(spNFT));
 
         vm.stopBroadcast();
     }

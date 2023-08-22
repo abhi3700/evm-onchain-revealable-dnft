@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
-import {LibString} from "solmate/utils/LibString.sol";
+import {LibString} from "./libs/LibString.sol";
+import {ReentrancyGuard} from "./dependencies/ReentrancyGuard.sol";
 import {LibBase64} from "./libs/LibBase64.sol";
-import {Owned} from "solmate/auth/Owned.sol";
-
-import {NFTStaking} from "./NFTStaking.sol";
-import {console2} from "forge-std/Test.sol";
+import {Owned} from "./dependencies/Owned.sol";
+import {Pausable} from "./dependencies/Pausable.sol";
+import {NFTStaking} from "./dependencies/NFTStaking.sol";
+// import {console2} from "forge-std/Test.sol";
 
 /// @title Revealed SP NFT contract
 /// @notice For "Separate Collection Revealing" approach i.e Type-2
-contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
+contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard, Pausable {
     using LibString for uint256;
 
     // ===================== STORAGE ===========================
@@ -50,6 +50,7 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
     constructor(string memory _n, string memory _s, address _erc20TokenAddress)
         NFTStaking(_n, _s, _erc20TokenAddress)
         Owned(msg.sender)
+        Pausable()
     {}
 
     // ===================== Getters ===========================
@@ -97,6 +98,7 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
     function mint(address to, uint256 id, bytes32 _name, bytes32 _description, string[4] memory attributeValues)
         external
         payable
+        whenNotPaused
         onlyOwner
         nonReentrant
     {
@@ -160,6 +162,16 @@ contract RevealedSPNFT is NFTStaking, Owned, ReentrancyGuard {
     /// @param _tokenId token Id for which accrued interest rewards are to be claimed & then unstake
     function unstake(uint256 _tokenId) external nonReentrant {
         _unstake(_tokenId);
+    }
+
+    /// @notice Pause contract
+    function pause() external onlyOwner whenNotPaused {
+        _pause();
+    }
+
+    /// @notice Unpause contract
+    function unpause() external onlyOwner whenPaused {
+        _unpause();
     }
 
     // ===================== UTILITY ===========================

@@ -340,7 +340,7 @@ contract SPNFTSepoliaTest is Test {
         uint256 balAfter = spToken.balanceOf(ALICE);
 
         // check if unstaked
-        assertFalse(spNFT.stakedTokenIds(1).isStaked, "token didn't get unstaked");
+        assertFalse(spNFT.getTokenIdStatus(1), "token didn't get unstaked");
 
         // check for rewards
         assertGe(balAfter, balBefore, "there should be some rewards claimed if staked for some time");
