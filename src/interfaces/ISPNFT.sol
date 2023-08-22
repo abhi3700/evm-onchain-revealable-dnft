@@ -13,6 +13,12 @@ interface ISPNFT is IERC721Metadata {
         string[4] attributeValues;
     }
 
+    struct Stake {
+        bool isStaked;
+        uint32 stakedTime; // time from when the accrued interest calculation starts, reset the time (to now) when claimed
+    }
+
+    function stakedTokenIds(uint256 tokenId) external view returns (Stake memory);
     function metadata(uint256 tokenId) external view returns (Metadata memory);
     function totalDepositedETH() external view returns (uint256);
     function tokenIds() external view returns (uint256);

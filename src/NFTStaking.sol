@@ -23,10 +23,11 @@ abstract contract NFTStaking is ERC721 {
     mapping(uint256 => Stake) public stakedTokenIds;
 
     event Staked(address indexed user, uint256 indexed tokenId);
-    event Unstake(address indexed user, uint256 indexed tokenId);
+    event Unstaked(address indexed user, uint256 indexed tokenId);
 
     error NotStaked();
     error AlreadyStaked();
+    error NotTokenOwner();
 
     constructor(string memory _n, string memory _s, address _erc20TokenAddress) ERC721(_n, _s) {
         erc20Token = ERC20(_erc20TokenAddress);
@@ -44,6 +45,9 @@ abstract contract NFTStaking is ERC721 {
     function _stake(uint256 _tokenId) internal {
         // check for valid token id: owned or not by caller
         ownerOf(_tokenId);
+
+        // check for correct owner
+        _isOwnerOf(_tokenId);
 
         // By default the type is 2 as minted by SPNFT after contract deployment settings for the project.
         // So, no need to check for the reveal type.
@@ -65,8 +69,11 @@ abstract contract NFTStaking is ERC721 {
     /// @dev unstake & claim rewards token Id
     /// @param _tokenId token Id for which accrued interest rewards are to be claimed & then unstake
     function _unstake(uint256 _tokenId) internal {
-        // check for valid token id: owned or not by caller
+        // check for valid token id whether minted or not
         ownerOf(_tokenId);
+
+        // check for correct owner
+        _isOwnerOf(_tokenId);
 
         // check if token id staked or not
         if (!stakedTokenIds[_tokenId].isStaked) {
@@ -81,6 +88,13 @@ abstract contract NFTStaking is ERC721 {
         // mint the accrued interest
         erc20Token.safeTransfer(msg.sender, accruedInterest);
 
-        emit Unstake(msg.sender, _tokenId);
+        emit Unstaked(msg.sender, _tokenId);
+    }
+
+    function _isOwnerOf(uint256 id) internal view {
+        // check for the correct owner
+        if (ownerOf(id) != msg.sender) {
+            revert NotTokenOwner();
+        }
     }
 }

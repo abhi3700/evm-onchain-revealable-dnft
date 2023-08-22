@@ -3,17 +3,15 @@ title: Deployment
 ---
 
 ```sh
-❯ forge script script/SPNFT.s.sol:SPNFTScript --fork-url $SEPOLIA_RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast --verify                                                                                                               ⏎
-[⠒] Compiling...
-[⠘] Compiling 5 files with 0.8.18
-[⠃] Solc 0.8.18 finished in 32.83s
-Compiler run successful!
+❯ forge script script/SPNFT.s.sol:SPNFTScript --fork-url $SEPOLIA_RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast --verify
+[⠢] Compiling...
+No files changed, compilation skipped
 Script ran successfully.
 
 == Logs ==
-  ERC20 token deployed at:  0x0FF7850D1230e2B7A1aEc52CcBb5208A05cb429c
-  SPNFT contract deployed at:  0x743a07e54C9501EaD5AA5296983431d8CBC9597c
-  RSPNFT contract deployed at:  0xB022456330E4FF95519b5a6b6Cf70f303d1AB97C
+  ERC20 token deployed at:  0x199e8a373431bb894a4108BC5749A682Ee6D76Ab
+  SPNFT contract deployed at:  0x8B2B82cb1Ae16F6b9Bd825078c0c31D3BeB8c45A
+  RSPNFT contract deployed at:  0xF63A2898AbfB69f8A35E381793856E0e528DCFdF
   The SPNFT's balance:  10000000000000000000000
   The SPNFT's balance:  10000000000000000000000
 
@@ -23,11 +21,11 @@ Script ran successfully.
 
 Chain 11155111
 
-Estimated gas price: 3.1929522 gwei
+Estimated gas price: 3.000398678 gwei
 
-Estimated total gas used for script: 9859568
+Estimated total gas used for script: 10671730
 
-Estimated amount required: 0.0314811293366496 ETH
+Estimated amount required: 0.03201944458397294 ETH
 
 ==========================
 
@@ -35,38 +33,38 @@ Estimated amount required: 0.0314811293366496 ETH
 Finding wallets for all the necessary addresses...
 ##
 Sending transactions [0 - 3].
-⠚ [00:00:01] [####################################################################################################################################################################################################################] 4/4 txes (0.0s)
+⠚ [00:00:02] [############################################################################################################################################] 4/4 txes (0.0s)
 Transactions saved to: /Users/abhi3700/F/coding/github_repos/sp_coding_challenge/broadcast/SPNFT.s.sol/11155111/run-latest.json
 
 Sensitive values saved to: /Users/abhi3700/F/coding/github_repos/sp_coding_challenge/cache/SPNFT.s.sol/11155111/run-latest.json
 
 ##
 Waiting for receipts.
-⠒ [00:00:27] [################################################################################################################################################################################################################] 4/4 receipts (0.0s)
+⠒ [00:00:20] [########################################################################################################################################] 4/4 receipts (0.0s)
 ##### sepolia
-✅  [Success]Hash: 0x83250dcab79f30c384d20e06d04ac63590e972d10cbe0c9b49f98f38c910ebe0
-Contract Address: 0x0FF7850D1230e2B7A1aEc52CcBb5208A05cb429c
-Block: 4133218
-Paid: 0.002631754974105415 ETH (856633 gas * 3.072208255 gwei)
-
-
-##### sepolia
-✅  [Success]Hash: 0x0d8049d10f1b9607aae2a27577664ba8009ae2e63cc80f7d3432c569f224e6a8
-Contract Address: 0x743a07e54C9501EaD5AA5296983431d8CBC9597c
-Block: 4133218
-Paid: 0.020323889562335255 ETH (6615401 gas * 3.072208255 gwei)
+✅  [Success]Hash: 0x15dbe9895dabaa6f5593c8063c00cecba06e6744e97dc116b2f041ad12370889
+Contract Address: 0x199e8a373431bb894a4108BC5749A682Ee6D76Ab
+Block: 4134818
+Paid: 0.002570040324742441 ETH (856633 gas * 3.000164977 gwei)
 
 
 ##### sepolia
-✅  [Success]Hash: 0xd27e77b477b7f1e2e465e08a6bcf15a081b501646eb046c84a735fadb1a65d29
-Block: 4133218
-Paid: 0.000157527478275125 ETH (51275 gas * 3.072208255 gwei)
+✅  [Success]Hash: 0xe8cc5c1791793657a56e9d4f5b1ab5ba4d881c667c998c3f1e999a3f4309903a
+Contract Address: 0x8B2B82cb1Ae16F6b9Bd825078c0c31D3BeB8c45A
+Block: 4134818
+Paid: 0.021722421500955593 ETH (7240409 gas * 3.000164977 gwei)
 
 
 ##### sepolia
-✅  [Success]Hash: 0xdd3da7bbffa8c7b49467ceca2c4679c1e5aa77ee376fa96bda1f8b9dc9b25e18
-Block: 4133218
-Paid: 0.000157527478275125 ETH (51275 gas * 3.072208255 gwei)
+✅  [Success]Hash: 0x94d3e96cef39c94878f468007318998e3aa3749df638d361238e6b196813dee4
+Block: 4134818
+Paid: 0.000153833459195675 ETH (51275 gas * 3.000164977 gwei)
+
+
+##### sepolia
+✅  [Success]Hash: 0xbf8318a80d3cf7bf310e1cc58725e7c5e3a3e59fc0c3ca4116a67a98668eb9da
+Block: 4134818
+Paid: 0.000153833459195675 ETH (51275 gas * 3.000164977 gwei)
 
 
 Transactions saved to: /Users/abhi3700/F/coding/github_repos/sp_coding_challenge/broadcast/SPNFT.s.sol/11155111/run-latest.json
@@ -78,35 +76,14 @@ Sensitive values saved to: /Users/abhi3700/F/coding/github_repos/sp_coding_chall
 ==========================
 
 ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
-Total Paid: 0.02327069949299092 ETH (7574584 gas * avg 3.072208255 gwei)
+Total Paid: 0.024600128744089384 ETH (8199592 gas * avg 3.000164977 gwei)
 
-We haven't found any matching bytecode for the following contracts: [0x0ff7850d1230e2b7a1aec52ccbb5208a05cb429c].
+We haven't found any matching bytecode for the following contracts: [0x199e8a373431bb894a4108bc5749a682ee6d76ab, 0x8b2b82cb1ae16f6b9bd825078c0c31d3beb8c45a, 0xf63a2898abfb69f8a35e381793856e0e528dcfdf].
 
 This may occur when resuming a verification, but the underlying source code or compiler version has changed.
 ##
-Start verification for (2) contracts
-Start verifying contract `0x743a07e54c9501ead5aa5296983431d8cbc9597c` deployed on sepolia
-
-Submitting verification for [src/SPNFT.sol:SPNFT] "0x743a07e54C9501EaD5AA5296983431d8CBC9597c".
-Submitted contract for verification:
-        Response: `OK`
-        GUID: `mzctwcxvn45e8es9ihyqqi9uimew3uq9zbw7jmgnxzxdthxwhv`
-        URL:
-        https://sepolia.etherscan.io/address/0x743a07e54c9501ead5aa5296983431d8cbc9597c
-Contract verification status:
-Response: `NOTOK`
-Details: `Pending in queue`
-Contract verification status:
-Response: `NOTOK`
-Details: `Pending in queue`
-Contract verification status:
-Response: `OK`
-Details: `Pass - Verified`
-Contract successfully verified
-Start verifying contract `0xb022456330e4ff95519b5a6b6cf70f303d1ab97c` deployed on sepolia
-
-Contract [src/RevealedSPNFT.sol:RevealedSPNFT] "0xB022456330E4FF95519b5a6b6Cf70f303d1AB97C" is already verified. Skipping verification.
-All (2) contracts were verified!
+Start verification for (0) contracts
+All (0) contracts were verified!
 
 Transactions saved to: /Users/abhi3700/F/coding/github_repos/sp_coding_challenge/broadcast/SPNFT.s.sol/11155111/run-latest.json
 

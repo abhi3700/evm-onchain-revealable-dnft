@@ -294,6 +294,9 @@ contract SPNFT is NFTStaking, ReentrancyGuard, VRFConsumerBaseV2, ConfirmedOwner
         // token exists
         ownerOf(id);
 
+        // check for the correct owner
+        _isOwnerOf(id);
+
         if (!(_revealType == 1 || _revealType == 2)) {
             revert InvalidRevealType();
         }
