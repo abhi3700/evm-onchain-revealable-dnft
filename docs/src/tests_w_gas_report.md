@@ -1,6 +1,8 @@
-## Gas Report
+## Tests with Gas Report
 
-**`SPNFTTest` locally**:
+**`SPNFT`**:
+
+> Run in local test environment
 
 ```sh
 ❯ forge test --mc SPNFTTest --gas-report                                                                                                                                 ⏎
@@ -67,4 +69,78 @@ Test result: ok. 24 passed; 0 failed; 0 skipped; finished in 33.40ms
 
 
 Ran 1 test suites: 24 tests passed, 0 failed, 0 skipped (24 total tests)
+```
+
+---
+
+**`SPNFT`** & **`RevealedSPNFT`**:
+
+> Run on Sepolia Testnet
+
+```sh
+❯ forge test --mc SPNFTSepoliaTest --fork-url $SEPOLIA_RPC_URL --gas-report
+[⠒] Compiling...
+No files changed, compilation skipped
+
+Running 5 tests for test/sepolia/RSPNFTSepolia.t.sol:RSPNFTSepoliaTest
+[PASS] testContractBalances() (gas: 8210)
+[PASS] testGetOwners() (gas: 10394)
+[PASS] testGetTokenIdsBeforeMint() (gas: 8270)
+[PASS] testRevertStakeRevealedWTokenType2() (gas: 392394)
+[PASS] testRevertUnstakeUnstakedToken() (gas: 391681)
+Test result: ok. 5 passed; 0 failed; 0 skipped; finished in 120.81s
+
+Running 17 tests for test/sepolia/SPNFTSepolia.t.sol:SPNFTSepoliaTest
+[PASS] testContractBalances() (gas: 8261)
+[PASS] testGetOwners() (gas: 8543)
+[PASS] testGetTokenIdsAfterMint() (gas: 168020)
+[PASS] testGetTokenIdsBeforeMint() (gas: 8524)
+[PASS] testRevealTokenType1() (gas: 767497)
+[PASS] testRevealTokenType2() (gas: 378896)
+[PASS] testRevertNonTokenOwnerRevealToken(address) (runs: 256, μ: 192563, ~: 192563)
+[PASS] testRevertNonTokenOwnerStakeRevealedToken(address) (runs: 256, μ: 388804, ~: 388804)
+[PASS] testRevertRevealAlreadyRevealedToken() (gas: 384920)
+[PASS] testRevertRevealTokenOfInvalidType(uint8) (runs: 256, μ: 198956, ~: 198956)
+[PASS] testRevertStakeRevealedTokenTypeNot1() (gas: 387329)
+[PASS] testRevertStakeUnrevealedToken() (gas: 195759)
+[PASS] testRevertUnstakeByNonTokenOwner(address) (runs: 256, μ: 417369, ~: 417369)
+[PASS] testRevertUnstakeNonMintedToken(uint256) (runs: 256, μ: 18855, ~: 18855)
+[PASS] testRevertUnstakeUnstakedToken() (gas: 386298)
+[PASS] testStakeRevealedTokenType1() (gas: 410127)
+[PASS] testUnstakeStakedToken() (gas: 436531)
+Test result: ok. 17 passed; 0 failed; 0 skipped; finished in 120.81s
+| RevealedSPNFT contract |                 |      |        |      |         |
+|------------------------|-----------------|------|--------|------|---------|
+| Deployment Cost        | Deployment Size |      |        |      |         |
+| 0                      | 0               |      |        |      |         |
+| Function Name          | min             | avg  | median | max  | # calls |
+| owner                  | 2638            | 2638 | 2638   | 2638 | 1       |
+
+
+| SPNFT contract  |                 |      |        |      |         |
+|-----------------|-----------------|------|--------|------|---------|
+| Deployment Cost | Deployment Size |      |        |      |         |
+| 0               | 0               |      |        |      |         |
+| Function Name   | min             | avg  | median | max  | # calls |
+| tokenIds        | 2570            | 2570 | 2570   | 2570 | 1       |
+
+
+| SPToken contract |                 |      |        |      |         |
+|------------------|-----------------|------|--------|------|---------|
+| Deployment Cost  | Deployment Size |      |        |      |         |
+| 0                | 0               |      |        |      |         |
+| Function Name    | min             | avg  | median | max  | # calls |
+| balanceOf        | 2612            | 2612 | 2612   | 2612 | 1       |
+
+
+| VRFCoordinatorV2 contract |                 |       |        |       |         |
+|---------------------------|-----------------|-------|--------|-------|---------|
+| Deployment Cost           | Deployment Size |       |        |       |         |
+| 0                         | 0               |       |        |       |         |
+| Function Name             | min             | avg   | median | max   | # calls |
+| requestRandomWords        | 37210           | 37210 | 37210  | 37210 | 1       |
+
+
+
+Ran 2 test suites: 22 tests passed, 0 failed, 0 skipped (22 total tests)
 ```
