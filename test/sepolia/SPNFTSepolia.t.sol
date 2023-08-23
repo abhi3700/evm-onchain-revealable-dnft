@@ -47,14 +47,14 @@ contract SPNFTSepoliaTest is Test {
     // ===================== CONSTRUCTOR ===========================
     function setUp() public {
         // 1. deploy ERC20
-        spToken = ISPToken(SP_TOKEN_ADDRESS);
+        spToken = ISPToken(vm.envAddress("SP_TOKEN"));
         // 2. deploy SPNFT
         //   - linked ERC20 (into NFTStaking) to SPNFT
         //   - created RSPNFT contract
         //     - linked ERC20 (into NFTStaking) to RSPNFT
         /// chainlink 3 params parsed for sepolia network. Goerli faucets difficult to get as mainnet balance required > 0.1 ETH.
-        spNFT = ISPNFT(SP_NFT_ADDRESS);
-        rSPNFT = IRevealedSPNFT(RSP_NFT_ADDRESS);
+        spNFT = ISPNFT(vm.envAddress("SP_NFT"));
+        rSPNFT = IRevealedSPNFT(vm.envAddress("R_SP_NFT"));
     }
 
     // ===================== Getters ===========================
